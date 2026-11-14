@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>重大事件提醒 · 股市日历</title>
+<style>
+  :root{
+    --bg:#0b0f1a; --card:#141b2d; --card2:#101626; --line:#232c44;
+    --txt:#e8edf7; --muted:#8b96ad; --gold:#ffd166; --cyan:#4cc9f0; --red:#ef476f;
+    --green:#2ec27e; --grad:linear-gradient(135deg,#4cc9f0,#7b8cff 55%,#ffd166);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+    background:radial-gradient(1200px 600px at 20% -10%, #172244 0%, var(--bg) 55%) fixed, var(--bg);
+    color:var(--txt); min-height:100vh; padding:20px 16px 60px;
+  }
+  .wrap{max-width:1180px; margin:0 auto;}
+  /* ---------- 顶部 ---------- */
+  header{display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:18px;}
+  h1{font-size:26px; letter-spacing:1px; background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  h1 small{font-size:13px; color:var(--muted); -webkit-text-fill-color:var(--muted); letter-spacing:0; margin-left:8px; font-weight:400;}
+  .clock{font-size:13px; color:var(--muted); text-align:right; line-height:1.7;}
+  .clock b{color:var(--cyan); font-weight:600;}
+  /* ---------- 统计 ---------- */
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px;}
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px;}
+  .stat b{display:block; font-size:18px; color:var(--gold); margin-bottom:2px;}
+  .stat span{font-size:12px; color:var(--muted);}
+  /* ---------- 过滤 ---------- */
+  .filters{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; align-items:center;}
+  .filters button{
+    background:var(--card); color:var(--txt); border:1px solid var(--line);
+    border-radius:999px; padding:7px 14px; font-size:13px; cursor:pointer; transition:.15s;
+  }
+  .filters button.on{background:var(--grad); color:#0b0f1a; border-color:transparent; font-weight:600;}
+  .filters button:hover{border-color:var(--cyan);}
+  .filters .spacer{flex:1;}
+  .filters .ghost{background:transparent; border-color:var(--line); color:var(--muted); font-size:12px;}
+  .filters .divider{width:1px; height:20px; background:var(--line); margin:0 4px;}
+  .view-btn{font-weight:600;}
+  .histbar{display:flex; flex-wrap:wrap; align-items:center; gap:10px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:var(--muted);}
+  .histbar .spacer{flex:1;}
+  .histbar input[type=date]{background:var(--card2); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:5px 8px; font-size:13px;}
+  .histbar .hy{background:var(--card2); color:var(--txt); border:1px solid var(--line); border-radius:999px; padding:5px 11px; font-size:12px; cursor:pointer;}
+  .histbar .hy.on{background:var(--grad); color:#0b0f1a; border-color:transparent; font-weight:600;}
+  .histbar .hy:hover{border-color:var(--cyan);}
+  .histbar #histRange{color:var(--gold); font-variant-numeric:tabular-nums;}
+  /* ---------- 历史详情页 ---------- */
+  #detailView{max-width:1180px; margin:0 auto; padding:0 16px 60px;}
+  .ghost-btn{background:var(--card); color:var(--txt); border:1px solid var(--line); border-radius:10px; padding:8px 16px; font-size:13px; cursor:pointer; margin-bottom:14px;}
+  .ghost-btn:hover{border-color:var(--cyan);}
+  .detail-head{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin-bottom:16px;}
+  .detail-head .badges{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;}
+  .detail-head h2{font-size:22px; margin-bottom:6px; line-height:1.35;}
+  .detail-head .org{font-size:12.5px; color:var(--muted); margin-bottom:10px;}
+  .detail-head .impact{font-size:13px; color:#b9c3d8; line-height:1.7; margin-bottom:8px;}
+  .detail-head .impact b{color:var(--cyan);}
+  .detail-head .note{font-size:12px; color:var(--muted); line-height:1.6;}
+  .points-block{margin-top:14px; border-top:1px dashed var(--line); padding-top:14px;}
+  .points-block h3{font-size:14px; color:var(--cyan); margin-bottom:10px;}
+  .point{display:flex; gap:10px; margin-bottom:10px;}
+  .p-num{flex:none; width:22px; height:22px; border-radius:50%; background:var(--card2); border:1px solid var(--line); color:var(--gold); font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:1px;}
+  .p-text{font-size:13px; color:var(--txt); line-height:1.6;}
+  .p-impact{font-size:12.5px; color:#b9c3d8; line-height:1.6; margin-top:3px;}
+  .p-impact b{color:var(--cyan);}
+  .bullbear{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; border-top:1px dashed var(--line); padding-top:14px;}
+  .bb{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:10px 12px;}
+  .bb h4{font-size:13px; margin-bottom:6px;}
+  .bb.bull h4{color:var(--red);}
+  .bb.bear h4{color:var(--green);}
+  .bb ul{padding-left:16px; margin:0;}
+  .bb li{font-size:12.5px; color:#b9c3d8; line-height:1.7;}
+  @media (max-width:560px){ .bullbear{grid-template-columns:1fr;} }
+  .chart-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:14px;}
+  .chart-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 12px 8px;}
+  .chart-card h3{font-size:14px; display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px;}
+  .chart-card h3 small{color:var(--muted); font-weight:400; font-size:11px;}
+  .chart-card canvas{width:100%; height:300px; display:block;}
+  .chart-slider{display:flex; align-items:center; gap:8px; margin-top:6px;}
+  .chart-slider input[type=range]{flex:1; accent-color:var(--gold); height:4px; cursor:pointer;}
+  .chart-slider .win-label{font-size:10.5px; color:var(--muted); min-width:52px; text-align:right; font-variant-numeric:tabular-nums;}
+  .chart-legend{font-size:10.5px; color:var(--muted); margin-top:2px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;}
+  .chart-legend i{display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:3px; vertical-align:middle;}
+  .chart-meta{font-size:11px; color:var(--muted); margin-top:4px; display:flex; justify-content:space-between; font-variant-numeric:tabular-nums;}
+  .data-table-block{margin-top:14px; border-top:1px dashed var(--line); padding-top:14px;}
+  .data-table-block h3{font-size:14px; color:var(--cyan); margin-bottom:10px;}
+  .data-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .data-table th{color:var(--muted); font-weight:400; text-align:left; padding:6px 8px; border-bottom:1px solid var(--line);}
+  .data-table td{padding:6px 8px; border-bottom:1px solid rgba(35,44,68,.5); color:#b9c3d8;}
+  .data-note{font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.6;}
+  .chart-hint{font-size:12px; color:var(--muted); margin-top:12px; line-height:1.7;}
+  /* ---------- 卡片 ---------- */
+  #cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px;}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:16px 16px 12px; position:relative; overflow:hidden; transition:.2s;
+  }
+  .card:hover{transform:translateY(-2px); border-color:#33406a;}
+  .card.S{border-left:3px solid var(--red); background:linear-gradient(160deg,#1a2038,#141b2d 60%);}
+  .card.A{border-left:3px solid var(--cyan);}
+  .card.B{border-left:3px solid #3a4763;}
+  .card.past{opacity:.45;}
+  .card-head{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:8px;}
+  .badge{font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); color:var(--muted);}
+  .badge.lv{font-weight:700; color:#0b0f1a; border:none;}
+  .badge.hot{color:var(--gold); border-color:var(--gold); font-weight:600;}
+  .lv.S{background:var(--red);} .lv.A{background:var(--cyan);} .lv.B{background:#3a4763; color:var(--txt);}
+  .date{font-size:12px; color:var(--muted); margin-left:auto;}
+  .card h2{font-size:17px; margin-bottom:2px; line-height:1.35;}
+  .card .org{font-size:12px; color:var(--muted); margin-bottom:10px;}
+  /* ---------- 倒计时 ---------- */
+  .cd{display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; align-items:baseline;}
+  .cd .num{background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:4px 9px; font-size:20px; font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums; min-width:52px; text-align:center; line-height:1.2;}
+  .cd .u{font-size:11px; color:var(--muted); align-self:flex-end; margin-bottom:5px;}
+  .cd .done{font-size:14px; color:var(--green); font-weight:600;}
+  .cd .live{font-size:14px; color:var(--gold); font-weight:600; animation:blink 1.6s infinite;}
+  @keyframes blink{50%{opacity:.55;}}
+  .impact{font-size:12.5px; color:#b9c3d8; line-height:1.6; margin-bottom:10px;}
+  .impact b{color:var(--cyan);}
+  .note{font-size:11.5px; color:var(--muted); line-height:1.5; margin-bottom:10px; border-top:1px dashed var(--line); padding-top:8px;}
+  /* ---------- 提醒行 ---------- */
+  .remind{display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); border-top:1px solid var(--line); padding-top:10px;}
+  .remind label{display:flex; align-items:center; gap:6px; cursor:pointer; color:var(--txt);}
+  .remind input[type=checkbox]{accent-color:var(--gold); width:15px; height:15px; cursor:pointer;}
+  .remind input[type=number]{
+    width:44px; background:var(--card2); color:var(--txt); border:1px solid var(--line);
+    border-radius:6px; padding:3px 4px; font-size:13px; text-align:center; font-variant-numeric:tabular-nums;
+  }
+  .remind input[type=number]:focus{outline:1px solid var(--cyan);}
+  .remind .unit{font-size:12px; color:var(--muted);}
+  .remind .test{
+    margin-left:auto; background:transparent; border:1px solid var(--line); color:var(--cyan);
+    border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer;
+  }
+  .remind .test:hover{border-color:var(--cyan);}
+  .remind .fired{color:var(--green); font-size:11px;}
+  /* ---------- 弹窗通知 ---------- */
+  #modal{
+    position:fixed; inset:0; background:rgba(4,6,14,.72); backdrop-filter:blur(3px);
+    display:none; align-items:center; justify-content:center; z-index:99; padding:20px;
+  }
+  #modal.show{display:flex;}
+  .modal-box{
+    background:linear-gradient(160deg,#1d2440,#131a2e); border:1px solid #3a4763;
+    border-radius:18px; padding:26px 28px; max-width:460px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.5);
+    animation:pop .25s ease;
+  }
+  @keyframes pop{from{transform:scale(.92); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .modal-box .bell{font-size:40px; margin-bottom:8px;}
+  .modal-box h3{font-size:13px; color:var(--gold); letter-spacing:2px; margin-bottom:10px;}
+  .modal-box .ev{font-size:20px; font-weight:700; line-height:1.4; margin-bottom:6px;}
+  .modal-box .cdline{font-size:15px; color:var(--cyan); margin-bottom:16px; font-variant-numeric:tabular-nums;}
+  .modal-box .sub{font-size:12.5px; color:var(--muted); line-height:1.6; margin-bottom:18px;}
+  .modal-box button{
+    width:100%; background:var(--grad); color:#0b0f1a; border:none; border-radius:10px;
+    padding:11px; font-size:15px; font-weight:700; cursor:pointer;
+  }
+  /* ---------- 页脚 ---------- */
+  footer{margin-top:28px; text-align:center; font-size:11.5px; color:var(--muted); line-height:1.9;}
+  footer a{color:var(--cyan); text-decoration:none;}
+  @media (max-width:560px){
+    h1{font-size:20px;}
+    .card h2{font-size:15.5px;}
+    .cd .num{font-size:16px; min-width:44px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>重大事件提醒 <small>最近一年 · 能搅动股市的大事（国内 + 国外）</small></h1>
+    <div class="clock">
+      <div>今天是 <b id="today">—</b> <span id="liveClock"></span></div>
+      北京时间 · 倒计时自动更新
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><b id="statNext">—</b><span>距最近的大事件</span></div>
+    <div class="stat"><b id="statAlerts">0</b><span>已开启提醒的事件</span></div>
+    <div class="stat"><b id="statFired">0</b><span>已触发提醒</span></div>
+    <div class="stat" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <span style="font-size:12px;">系统通知</span>
+      <button id="btnNotify" class="test" style="margin-left:auto;background:var(--card2);border:1px solid var(--line);color:var(--cyan);border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">开启</button>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="view-btn on" data-view="future">📅 未来</button>
+    <button class="view-btn" data-view="history">🕰️ 历史</button>
+    <span class="divider"></span>
+    <button data-f="all" class="on">全部</button>
+    <button data-f="cn">🇨🇳 国内</button>
+    <button data-f="overseas">🌍 海外</button>
+    <button data-f="policy">🏦 央行·政策</button>
+    <button data-f="tech">💡 科技</button>
+    <button data-f="alerted">🔔 已设提醒</button>
+    <span class="spacer"></span>
+    <button class="ghost" id="btnOnlineUpdate">🔄 更新行情</button>
+    <button class="ghost" id="btnReset">重置全部提醒</button>
+  </div>
+
+  <div class="histbar" id="histBar" style="display:none">
+    <span>回顾窗口</span>
+    <input type="date" id="histEnd">
+    <span>↔ 往前一年</span>
+    <span id="histRange">—</span>
+    <span class="spacer"></span>
+    <button class="hy on" data-y="recent">最近一年</button>
+    <button class="hy" data-y="2025">2025</button>
+    <button class="hy" data-y="2024">2024</button>
+    <button class="hy" data-y="2023">2023</button>
+    <button class="hy" data-y="2022">2022</button>
+    <button class="hy" data-y="2021">2021</button>
+    <button class="hy" data-y="2020">2020</button>
+  </div>
+
+  <div id="cards"></div>
+
+  <div id="detailView" style="display:none">
+    <button id="btnBack" class="ghost-btn">← 返回历史</button>
+    <div id="detailHead" class="detail-head"></div>
+    <div id="chartGrid" class="chart-grid"></div>
+    <div id="chartHint" class="chart-hint"></div>
+  </div>
+
+  <footer>
+    日期说明：标注「预计」的会议按往年惯例推算，正式日期以官方公布为准（APK 发布前将逐条核对）。<br>
+    本页为网页演示版 · 数据保存在本机浏览器（localStorage），刷新不丢失。
+  </footer>
+</div>
+
+<div id="modal">
+  <div class="modal-box">
+    <div class="bell">⏰</div>
+    <h3>重大事件提醒</h3>
+    <div class="ev" id="mEv">—</div>
+    <div class="cdline" id="mCd">—</div>
+    <div class="sub" id="mSub">—</div>
+    <button id="mClose">我知道了</button>
+  </div>
+</div>
+
+<script src="data/indices.js"></script>
+<script>
+"use strict";
+
+/* ============ 1. 数据：最近一年（2026-11-05 → 2027-11-05）============ */
+/* region: cn 国内 / us 美国 / eu 欧洲 / jp 日本 / global 全球
+   cat: policy 政策定调 / policy 央行 / tech 科技 / macro 宏观 / data 经济数据
+   level: S 顶级 / A 重要 / B 一般
+   start/end：北京时间（+08:00）。决议类会议按「决议发布」时刻计。 */
+const MEETINGS = [
+  { id:"cwb-2026", title:"中国国际进口博览会（进博会）", org:"上海 · 国家会展中心", region:"cn", cat:"macro", level:"A",
+    start:"2026-11-05T09:00:00+08:00", end:"2026-11-10T18:00:00+08:00",
+    impact:"进口合作大单与消费品牌集中发布，利好进口消费、跨境电商、免税与物流板块。",
+    note:"第七届进博会，11 月 5—10 日举行，今日已开幕。" },
+  { id:"wuzhen-2026", title:"世界互联网大会 · 乌镇峰会", org:"浙江乌镇", region:"cn", cat:"tech", level:"A",
+    start:"2026-11-07T09:00:00+08:00", end:"2026-11-09T18:00:00+08:00",
+    impact:"数字经济、AI 治理风向标，互联网平台与算力股情绪的重要催化。",
+    note:"预计 11 月 7—9 日举行（惯例 11 月上旬，以官方公布为准）。" },
+  { id:"cop31-2026", title:"COP31 联合国气候大会", org:"土耳其 · 安塔利亚", region:"global", cat:"macro", level:"A",
+    start:"2026-11-09T10:00:00+08:00", end:"2026-11-20T18:00:00+08:00",
+    impact:"全球减排与能源转型议程，牵引新能源、碳交易、传统能源板块定价。",
+    note:"2026 年 11 月 9—20 日（联合国官方已确认）。" },
+  { id:"politics-2026-12", title:"中央政治局会议（经济形势分析）", org:"中共中央 · 北京", region:"cn", cat:"policy", level:"S",
+    start:"2026-12-08T09:00:00+08:00", end:"2026-12-08T18:00:00+08:00",
+    impact:"为中央经济工作会议与 2027 年政策定调，A 股年末行情的风向标。",
+    note:"预计 12 月上旬召开（惯例：中央经济工作会议前数日，以官方通稿为准）。" },
+  { id:"cewc-2026", title:"中央经济工作会议", org:"中共中央 · 北京", region:"cn", cat:"policy", level:"S",
+    start:"2026-12-10T09:00:00+08:00", end:"2026-12-11T18:00:00+08:00",
+    impact:"年度最高级别经济会议，明确 2027 年政策基调与重点任务，全面影响 A 股与人民币资产。",
+    note:"预计 12 月 10—11 日（延续 2025 年节奏，以官方公布为准）。" },
+  { id:"fomc-2026-12", title:"美联储 FOMC 议息会议", org:"美国联邦储备委员会 · 华盛顿", region:"us", cat:"policy", level:"S",
+    start:"2026-12-10T03:00:00+08:00", end:"2026-12-10T04:00:00+08:00",
+    impact:"利率决议与点阵图决定全球风险资产定价，外资流向与汇率的关键变量。",
+    note:"会议 12 月 8—9 日（美东）；决议约美东 12/9 14:00 ＝ 北京 12/10 03:00，以美联储日程为准。" },
+  { id:"ecb-2026-12", title:"欧洲央行（ECB）议息会议", org:"德国 · 法兰克福", region:"eu", cat:"policy", level:"A",
+    start:"2026-12-17T21:15:00+08:00", end:"2026-12-17T22:00:00+08:00",
+    impact:"欧元区利率与购债信号，影响美元指数、欧股与新兴市场资金流。",
+    note:"预计 12 月中旬（决议约北京时间 21:15，以 ECB 日程为准）。" },
+  { id:"boj-2026-12", title:"日本央行（BOJ）议息会议", org:"日本 · 东京", region:"jp", cat:"policy", level:"A",
+    start:"2026-12-19T12:00:00+08:00", end:"2026-12-19T13:00:00+08:00",
+    impact:"日元套息交易的风向标，利率变动会放大全球股市波动。",
+    note:"会议 12 月 18—19 日（预计）；决议约日本时间 13:00 ＝ 北京 12:00。" },
+  { id:"ces-2027", title:"CES 国际消费电子展", org:"美国 · 拉斯维加斯", region:"global", cat:"tech", level:"A",
+    start:"2027-01-05T09:00:00+08:00", end:"2027-01-08T18:00:00+08:00",
+    impact:"AI 硬件与消费电子年度风向标，影响科技硬件、半导体与消费电子链。",
+    note:"预计 2027 年 1 月 5—8 日（惯例，以 CTA 公布为准）。" },
+  { id:"davos-2027", title:"世界经济论坛年会（达沃斯）", org:"瑞士 · 达沃斯", region:"global", cat:"macro", level:"A",
+    start:"2027-01-18T16:00:00+08:00", end:"2027-01-22T18:00:00+08:00",
+    impact:"全球精英定调会，风险偏好与跨国投资情绪的温度计。",
+    note:"预计 2027 年 1 月中下旬（惯例 1 月第三周，以 WEF 公布为准）。" },
+  { id:"fomc-2027-01", title:"美联储 FOMC 议息会议", org:"美国联邦储备委员会 · 华盛顿", region:"us", cat:"policy", level:"S",
+    start:"2027-01-28T03:00:00+08:00", end:"2027-01-28T04:00:00+08:00",
+    impact:"2027 年首次议息决议，全年利率路径预期由此展开。",
+    note:"会议 1 月 26—27 日（美东，暂定日程）；决议约北京 1/28 03:00。" },
+  { id:"lianghui-2027", title:"全国两会（十四届人大五次会议）", org:"北京 · 人民大会堂", region:"cn", cat:"policy", level:"S",
+    start:"2027-03-05T09:00:00+08:00", end:"2027-03-15T18:00:00+08:00",
+    impact:"政府工作报告公布全年 GDP 目标、赤字率与政策重点，A 股年度最重要事件之一。",
+    note:"预计 3 月 5 日开幕（全国人大惯例；会期约 1 周）。" },
+  { id:"gtc-2027", title:"英伟达 GTC 大会", org:"美国 · 圣何塞", region:"global", cat:"tech", level:"A",
+    start:"2027-03-17T09:00:00+08:00", end:"2027-03-20T18:00:00+08:00",
+    impact:"AI 算力与芯片路线图发布，牵引半导体、算力、光模块等科技主线。",
+    note:"预计 2027 年 3 月中旬（惯例，以英伟达公布为准）。" },
+  { id:"boao-2027", title:"博鳌亚洲论坛年会", org:"海南 · 博鳌", region:"cn", cat:"macro", level:"A",
+    start:"2027-03-24T09:00:00+08:00", end:"2027-03-27T18:00:00+08:00",
+    impact:"亚洲经贸合作与自贸信号，常伴随海南自贸港政策预期升温。",
+    note:"预计 2027 年 3 月下旬（惯例 3 月底，以官方公布为准）。" },
+  { id:"imf-2027", title:"IMF/世行春季会议", org:"美国 · 华盛顿", region:"global", cat:"macro", level:"B",
+    start:"2027-04-15T09:00:00+08:00", end:"2027-04-18T18:00:00+08:00",
+    impact:"全球增长预测与货币政策协调窗口，影响大宗商品与新兴市场情绪。",
+    note:"预计 4 月中旬（惯例，以 IMF 公布为准）。" },
+  { id:"cantonfair-2027", title:"广交会（春季）", org:"广州 · 琶洲", region:"cn", cat:"macro", level:"B",
+    start:"2027-04-15T09:00:00+08:00", end:"2027-05-05T18:00:00+08:00",
+    impact:"出口订单与外贸景气度的晴雨表，利好出口链、家电与电子元器件。",
+    note:"预计 4 月 15 日—5 月 5 日（惯例，以官方公布为准）。" },
+  { id:"politics-2027-04", title:"中央政治局会议（经济形势分析）", org:"中共中央 · 北京", region:"cn", cat:"policy", level:"A",
+    start:"2027-04-30T09:00:00+08:00", end:"2027-04-30T18:00:00+08:00",
+    impact:"一季度经济数据后的政策定调，决定 A 股二季度方向。",
+    note:"预计 4 月底（惯例，以官方通稿为准）。" },
+  { id:"io-2027", title:"谷歌 I/O 开发者大会", org:"美国 · 山景城", region:"global", cat:"tech", level:"B",
+    start:"2027-05-19T00:30:00+08:00", end:"2027-05-21T18:00:00+08:00",
+    impact:"安卓生态与 AI 新品发布，影响应用生态、AI 软件与消费电子。",
+    note:"预计 5 月中旬（惯例，以谷歌公布为准）。" },
+  { id:"wwdc-2027", title:"苹果 WWDC 开发者大会", org:"美国 · 库比蒂诺", region:"global", cat:"tech", level:"A",
+    start:"2027-06-08T00:30:00+08:00", end:"2027-06-12T18:00:00+08:00",
+    impact:"系统生态与 AI 功能发布，牵动果链、软件与应用生态估值。",
+    note:"预计 6 月上旬（惯例第 2 周，以苹果公布为准）。" },
+  { id:"fomc-2027-06", title:"美联储 FOMC 议息会议", org:"美国联邦储备委员会 · 华盛顿", region:"us", cat:"policy", level:"S",
+    start:"2027-06-17T03:00:00+08:00", end:"2027-06-17T04:00:00+08:00",
+    impact:"年中利率决议与更新预测，影响全球流动性预期。",
+    note:"会议 6 月 15—16 日（美东，暂定日程）；决议约北京 6/17 03:00。" },
+  { id:"summerdavos-2027", title:"夏季达沃斯论坛", org:"中国（大连/天津）", region:"cn", cat:"macro", level:"B",
+    start:"2027-06-24T09:00:00+08:00", end:"2027-06-27T18:00:00+08:00",
+    impact:"新兴产业与科技创新议题，常与地方产业政策预期共振。",
+    note:"预计 6 月底（惯例交替于大连/天津，以官方公布为准）。" },
+  { id:"gdp-2027-q2", title:"中国二季度 GDP 数据公布", org:"国家统计局", region:"cn", cat:"data", level:"A",
+    start:"2027-07-15T10:00:00+08:00", end:"2027-07-15T16:00:00+08:00",
+    impact:"经济增速与政策空间的重要验证点，直接影响消费、地产与周期股。",
+    note:"预计 7 月中旬（国家统计局惯例公布节奏）。" },
+  { id:"tsmc-2027-q2", title:"台积电季度法说会", org:"中国台湾 · 新竹", region:"global", cat:"tech", level:"A",
+    start:"2027-07-15T14:00:00+08:00", end:"2027-07-15T16:00:00+08:00",
+    impact:"全球半导体景气度与 AI 需求验证，牵动 A 股半导体、AI 算力链。",
+    note:"预计 7 月中旬（Q2 财报发布，以台积电公告为准）。" },
+  { id:"waic-2027", title:"世界人工智能大会（WAIC）", org:"上海", region:"cn", cat:"tech", level:"A",
+    start:"2027-07-25T09:00:00+08:00", end:"2027-07-28T18:00:00+08:00",
+    impact:"AI 应用落地与产业政策风向，机器人、算力与大模型板块催化。",
+    note:"预计 7 月下旬（惯例，以官方公布为准）。" },
+  { id:"fomc-2027-07", title:"美联储 FOMC 议息会议", org:"美国联邦储备委员会 · 华盛顿", region:"us", cat:"policy", level:"S",
+    start:"2027-07-29T03:00:00+08:00", end:"2027-07-29T04:00:00+08:00",
+    impact:"夏季议息决议，影响三季度全球风险资产走势。",
+    note:"会议 7 月 27—28 日（美东，暂定日程）；决议约北京 7/29 03:00。" },
+  { id:"politics-2027-07", title:"中央政治局会议（经济形势分析）", org:"中共中央 · 北京", region:"cn", cat:"policy", level:"A",
+    start:"2027-07-30T09:00:00+08:00", end:"2027-07-30T18:00:00+08:00",
+    impact:"年中经济定调，部署下半年政策，A 股下半年行情分水岭。",
+    note:"预计 7 月底（惯例，以官方通稿为准）。" },
+  { id:"jacksonhole-2027", title:"杰克逊霍尔全球央行年会", org:"美国 · 怀俄明州", region:"us", cat:"policy", level:"A",
+    start:"2027-08-21T22:00:00+08:00", end:"2027-08-23T18:00:00+08:00",
+    impact:"美联储政策转向的重要信号场，全球利率预期与成长股估值的关键节点。",
+    note:"预计 8 月下旬（惯例，以堪萨斯城联储公布为准）。" },
+  { id:"applesep-2027", title:"苹果秋季新品发布会", org:"美国 · 库比蒂诺", region:"global", cat:"tech", level:"A",
+    start:"2027-09-08T00:30:00+08:00", end:"2027-09-08T02:30:00+08:00",
+    impact:"新 iPhone 发布，果链、消费电子与 AI 手机主题的核心催化。",
+    note:"预计 9 月（惯例 9 月上旬，以苹果公布为准）。" },
+  { id:"fomc-2027-09", title:"美联储 FOMC 议息会议", org:"美国联邦储备委员会 · 华盛顿", region:"us", cat:"policy", level:"S",
+    start:"2027-09-16T03:00:00+08:00", end:"2027-09-16T04:00:00+08:00",
+    impact:"秋季议息决议，影响四季度全球配置。",
+    note:"会议 9 月 14—15 日（美东，暂定日程）；决议约北京 9/16 03:00。" },
+  { id:"dxxi-2027", title:"中国共产党第二十一次全国代表大会", org:"北京", region:"cn", cat:"policy", level:"S",
+    start:"2027-10-15T09:00:00+08:00", end:"2027-10-21T18:00:00+08:00",
+    impact:"决定未来五年大政方针与人事安排，A 股与人民币资产的超级事件。",
+    note:"官方已宣布：2027 年下半年召开（预计 10 月前后，以官方公布为准）。" },
+  { id:"fomc-2027-10", title:"美联储 FOMC 议息会议", org:"美国联邦储备委员会 · 华盛顿", region:"us", cat:"policy", level:"S",
+    start:"2027-10-28T03:00:00+08:00", end:"2027-10-28T04:00:00+08:00",
+    impact:"临近年底的议息决议，为下一年政策路径铺垫。",
+    note:"会议 10 月 26—27 日（美东，暂定日程）；决议约北京 10/28 03:00。" },
+  { id:"politics-2027-10", title:"中央政治局会议（经济形势分析）", org:"中共中央 · 北京", region:"cn", cat:"policy", level:"A",
+    start:"2027-10-30T09:00:00+08:00", end:"2027-10-30T18:00:00+08:00",
+    impact:"为 2028 年经济政策与中央经济工作会议预热。",
+    note:"预计 10 月底（惯例，以官方通稿为准）。" },
+  { id:"cwb-2027", title:"中国国际进口博览会（第八届）", org:"上海 · 国家会展中心", region:"cn", cat:"macro", level:"A",
+    start:"2027-11-05T09:00:00+08:00", end:"2027-11-10T18:00:00+08:00",
+    impact:"下一届进博会，聚焦全球采购与消费升级主题。",
+    note:"预计 11 月 5—10 日（惯例，恰在本窗口截止日）。" },
+  { id:"preann-2027", title:"年报业绩预告截止（暴雷高发期）", org:"沪深交易所", region:"cn", cat:"data", level:"A",
+    start:"2027-01-31T09:00:00+08:00", end:"2027-01-31T18:00:00+08:00",
+    impact:"业绩预告密集披露，暴雷与超预期频发，绩差小盘股波动加大。",
+    note:"每年 1 月底为年报业绩预告披露截止（惯例）。" },
+  { id:"annual-2027", title:"年报披露截止 + ST 风险警示潮", org:"沪深交易所", region:"cn", cat:"data", level:"A",
+    start:"2027-04-30T09:00:00+08:00", end:"2027-05-31T18:00:00+08:00",
+    impact:"年报收官后戴帽/退市风险集中暴露，ST 板块与绩差小盘股承压。",
+    note:"每年 4 月 30 日为年报披露截止日，5 月起密集 ST（惯例）。" },
+  { id:"midyear-2027", title:"半年报披露截止", org:"沪深交易所", region:"cn", cat:"data", level:"B",
+    start:"2027-08-31T09:00:00+08:00", end:"2027-08-31T18:00:00+08:00",
+    impact:"半年报收官，业绩兑现与分红方案影响板块轮动。",
+    note:"每年 8 月 31 日为半年报披露截止（惯例）。" },
+  { id:"q3-2027", title:"三季报披露截止", org:"沪深交易所", region:"cn", cat:"data", level:"B",
+    start:"2027-10-31T09:00:00+08:00", end:"2027-10-31T18:00:00+08:00",
+    impact:"三季报收官，全年业绩预期修正。",
+    note:"每年 10 月 31 日为三季报披露截止（惯例）。" }
+];
+
+/* ============ 1.2 会议内容要点与影响（二级页面用）============ */
+/* 特别事件：写具体内容；惯例会议：按类型匹配模板。 */
+
+// 惯例会议模板
+const TPL = {
+  lh: [
+    { p: "政府工作报告：GDP 增速目标、赤字率、货币政策基调", i: "GDP 目标决定顺周期与消费板块预期；赤字率影响基建、地产链；货币政策影响银行、券商与成长股" },
+    { p: "发改委 / 财政部 / 央行记者会：政策工具落地细节", i: "宽松预期强化成长与券商；财政发力利好基建与消费" },
+    { p: "代表议案与产业政策（新质生产力、扩内需）", i: "产业政策方向带动主题投资：AI、机器人、低空经济、消费" }
+  ],
+  cewc: [
+    { p: "定调下一年经济总量目标与政策取向", i: "决定全年市场风格与风险偏好中枢" },
+    { p: "重点任务：扩内需、新质生产力、防风险、稳地产", i: "扩内需→消费；新质生产力→科技；防风险→地产与金融" },
+    { p: "宏观政策组合：赤字率、降准降息预期", i: "流动性宽松预期→成长与券商；财政发力→基建与周期" }
+  ],
+  politics: [
+    { p: "对当前经济形势的判断（措辞变化）", i: "政策预期差直接决定指数方向" },
+    { p: "宏观政策基调（财政 / 货币）", i: "宽松信号→成长与周期共振；收紧→高估值承压" },
+    { p: "重点部署：地产、消费、科技、就业", i: "对应板块轮动：地产链、消费、科技" }
+  ],
+  fomc: [
+    { p: "利率决议（加息 / 降息 / 维持）", i: "全球流动性定价，直接影响 A 股外资流向与人民币汇率" },
+    { p: "点阵图与经济预测（SEP）：未来利率路径", i: "美债收益率与成长股估值锚，决定美股与 A 股科技风格" },
+    { p: "鲍威尔新闻发布会措辞（鸽 / 鹰）", i: "鸽派→风险资产反弹；鹰派→美元走强、新兴市场承压" }
+  ],
+  ecb: [
+    { p: "利率决议与购债计划", i: "影响美元指数、欧股与新兴市场资金流" },
+    { p: "拉加德发布会：经济展望与通胀判断", i: "影响欧元汇率与全球风险偏好" }
+  ],
+  boj: [
+    { p: "利率决议与 YCC / 购债政策", i: "日元套息交易平仓会放大全球股市波动" },
+    { p: "植田行长发布会：加息路径", i: "加息预期→日元走强→日本出口股与全球风险资产承压" }
+  ],
+  davos: [
+    { p: "全球政商领袖发言与年度主题", i: "全球风险偏好与跨国投资情绪的温度计" },
+    { p: "经济展望与地缘议题", i: "影响大宗商品、汇率与新兴市场配置" }
+  ],
+  cwb: [
+    { p: "进口采购签约与参展规模", i: "进口消费、跨境电商、免税与物流板块受益" },
+    { p: "外资企业投资意向与政策宣示", i: "外贸外资稳定预期，影响出口链与汇率" }
+  ],
+  wuzhen: [
+    { p: "数字经济政策与互联网治理", i: "互联网平台、数据要素板块催化" },
+    { p: "AI 与算力应用成果", i: "算力、AI 应用板块情绪催化" }
+  ],
+  ces: [
+    { p: "AI 硬件新品（PC / 手机 / 机器人）", i: "消费电子、AI 硬件链核心催化" },
+    { p: "芯片与终端路线图", i: "半导体、消费电子龙头受益" }
+  ],
+  gtc: [
+    { p: "新一代 GPU / 架构发布", i: "AI 算力链：光模块、服务器、PCB、液冷" },
+    { p: "AI 应用与生态合作", i: "AI 应用、机器人主题" }
+  ],
+  wwdc: [
+    { p: "新系统与 AI 功能集成", i: "果链、软件生态与应用分发" },
+    { p: "开发者生态政策", i: "服务收入与应用生态估值" }
+  ],
+  apple: [
+    { p: "新 iPhone 配置与定价", i: "果链（立讯、蓝思、歌尔等）核心催化" },
+    { p: "AI 功能与销售预期", i: "消费电子、AI 手机主题" }
+  ],
+  cop: [
+    { p: "减排目标与气候资金承诺", i: "新能源、碳中和主题催化" },
+    { p: "碳市场与能源转型机制", i: "碳交易、电力设备、传统能源定价" }
+  ],
+  boao: [
+    { p: "亚洲经济展望与自贸合作", i: "出口链、海南自贸港政策预期" },
+    { p: "产业合作议题", i: "区域经济与跨境电商" }
+  ],
+  jh: [
+    { p: "美联储主席演讲：政策路径信号", i: "全球利率预期与成长股估值的关键节点" }
+  ],
+  waic: [
+    { p: "大模型与应用发布", i: "AI 应用、算力板块" },
+    { p: "产业政策与投资签约", i: "机器人、智能驾驶、大模型" }
+  ],
+  canton: [
+    { p: "出口订单与成交额", i: "出口链、家电、消费电子景气验证" },
+    { p: "新品与产业趋势", i: "外贸景气度与相关产业链" }
+  ],
+  gdp: [
+    { p: "GDP 增速与分项（消费 / 投资 / 出口）", i: "消费、地产、周期板块直接定价" },
+    { p: "经济数据与政策空间", i: "数据超预期→顺周期；不及预期→政策加码预期" }
+  ],
+  imf: [
+    { p: "全球增长预测", i: "大宗商品与新兴市场情绪" },
+    { p: "政策协调与风险提示", i: "汇率与全球流动性" }
+  ],
+  finconf: [
+    { p: "金融监管改革方向", i: "银行、保险、券商板块" },
+    { p: "资本市场改革与风险化解", i: "市场生态、地产金融风险化解" }
+  ],
+  us_election: [
+    { p: "选举结果与国会控制权归属", i: "财政、监管、贸易政策预期重定价" },
+    { p: "政策主张：关税 / 减税 / 外交", i: "出口链、汇率、全球风险偏好" }
+  ],
+  ukraine: [
+    { p: "冲突升级与欧美制裁", i: "能源、军工、避险资产（黄金）受益" },
+    { p: "供应链与通胀影响", i: "农产品、油价上涨→通胀与加息预期升温" }
+  ],
+  ratecut: [
+    { p: "降准降息幅度与节奏", i: "流动性宽松，成长与券商受益" },
+    { p: "稳增长政策组合", i: "地产、消费、基建板块" }
+  ],
+  stamp: [
+    { p: "交易印花税减半", i: "交易成本下降，券商板块大涨" },
+    { p: "一揽子活跃资本市场举措", i: "市场情绪与成交量放大" }
+  ],
+  y2f: [
+    { p: "降准降息 + 存量房贷利率下调", i: "A 股暴涨、券商板块涨停潮" },
+    { p: "创设股市流动性工具（互换便利、增持再贷款）", i: "流动性预期全面扭转，风险偏好反转" },
+    { p: "政治局会议罕见定调", i: "市场全面重估，外资回流" }
+  ],
+  guojiu: [
+    { p: "严把发行上市准入、提高上市标准", i: "壳资源贬值，次新股与绩差股承压" },
+    { p: "强化分红、回购与退市", i: "高股息蓝筹走强，市场生态改善" }
+  ],
+  tariff: [
+    { p: "关税清单与税率", i: "出口链、航运、消费电子重挫" },
+    { p: "反制措施与谈判博弈", i: "内需对冲预期升温，农业等板块异动" }
+  ],
+  tariff_crash: [
+    { p: "全球关税升级引发抛售", i: "A 股单日暴跌超 7%，千股跌停" },
+    { p: "国家队增持 ETF、央企回购", i: "护盘托底，情绪逐步修复" }
+  ],
+  deepseek: [
+    { p: "DeepSeek-R1 发布：推理成本大幅下降", i: "算力需求逻辑重估，英伟达单日大跌" },
+    { p: "国产 AI 模型能力验证", i: "国产算力、AI 应用链受益" },
+    { p: "中美 AI 竞争叙事强化", i: "科技成长风格强化" }
+  ],
+  inaug: [
+    { p: "就职演说：关税与贸易政策宣示", i: "全球贸易不确定性上升" },
+    { p: "行政令密集签署（关税 / 移民 / 能源）", i: "美股波动、美元走强" },
+    { p: "减税与去监管预期", i: "金融、能源板块走强" }
+  ],
+  covid: [
+    { p: "出行 / 核酸 / 隔离政策优化", i: "出行链、消费链全面反转" },
+    { p: "全面放开预期", i: "旅游、航空、免税、大消费估值修复" }
+  ],
+  shuangjian: [
+    { p: "学科类培训不得上市融资 / 资本化", i: "教育股、中概股暴跌" },
+    { p: "行业转型方向", i: "素质教育、职教、AI 教育受益" }
+  ],
+  evergrande: [
+    { p: "债务违约风险暴露", i: "地产链信用风险：银行、建材、家电承压" },
+    { p: "保交楼与风险化解", i: "地产政策边际宽松预期" }
+  ],
+  svb: [
+    { p: "硅谷银行倒闭被接管", i: "全球银行股暴跌，避险情绪升温" },
+    { p: "美联储 / 财政部救助与加息前景", i: "降息预期升温，成长股受益" }
+  ],
+  ldi: [
+    { p: "英国养老金 LDI 危机", i: "英债暴跌、英镑创新低" },
+    { p: "英央行紧急购债", i: "全球债市波动，风险资产承压" }
+  ],
+  pelosi: [
+    { p: "佩洛西窜访台湾", i: "地缘紧张，A 股大跌" },
+    { p: "军事演训与反制措施", i: "军工、半导体异动" }
+  ],
+  blackmon: [
+    { p: "日本加息 + 美国衰退担忧", i: "日经暴跌 12%，全球熔断式下跌" },
+    { p: "日元套息交易平仓", i: "全球风险资产连锁抛售" }
+  ],
+  baotuan: [
+    { p: "流动性边际收紧与资金再平衡", i: "高估值抱团资产承压，茅指数见顶" },
+    { p: "美债收益率上行压制成长股", i: "资金转向周期与中小盘" }
+  ],
+  apr25: [
+    { p: "上海等地封控升级", i: "消费、物流、地产链重挫" },
+    { p: "人民币贬值压力", i: "外资流出加剧" },
+    { p: "稳增长政策加码预期", i: "基建、地产链反弹" }
+  ],
+  liq2024: [
+    { p: "雪球敲入、两融平仓、量化踩踏", i: "小微盘千股跌停" },
+    { p: "国家队入场买入 ETF、暂停转融券", i: "大盘蓝筹相对抗跌，情绪逐步修复" }
+  ],
+  oct8: [
+    { p: "节前史诗级上涨后的情绪高潮", i: "开盘涨停潮，成交 3.45 万亿创纪录" },
+    { p: "政策预期兑现与获利盘", i: "高开后大幅回落，波动加剧" }
+  ],
+  nfp: [
+    { p: "非农就业大幅低于预期且前值下修", i: "降息预期升温，美债收益率跳水" },
+    { p: "衰退担忧 vs 降息交易", i: "美股先跌后涨，波动放大" }
+  ],
+  shutdown: [
+    { p: "联邦政府恢复运转", i: "财政不确定性缓解，风险偏好修复" },
+    { p: "经济数据发布恢复", i: "数据真空结束，市场定价恢复" }
+  ],
+  fedhawk: [
+    { p: "降息 25bp 但点阵图转鹰", i: "市场下调后续降息预期" },
+    { p: "鲍威尔强调放缓步伐", i: "美股与黄金大跌" }
+  ],
+  election_misc: [
+    { p: "大选格局突变（遇刺 / 退选）", i: "波动率跳升，风险资产重定价" },
+    { p: "特朗普交易升温", i: "能源、金融、军工走强" }
+  ],
+  rcep: [
+    { p: "15 国正式签署 RCEP", i: "区域贸易壁垒大幅下降" },
+    { p: "关税减免与服务业开放", i: "港口物流、跨境电商、纺织服装出口链受益" }
+  ],
+  eu: [
+    { p: "中欧完成投资协定谈判", i: "中欧经贸合作预期升温" },
+    { p: "市场准入与公平竞争条款", i: "新能源、汽车、化工出口链受益" }
+  ],
+  anchorage: [
+    { p: "中美高层战略对话", i: "中美关系风向标，影响市场风险偏好" },
+    { p: "后续高层沟通安排", i: "关系缓和预期驱动外资流入" }
+  ],
+  proptax: [
+    { p: "全国人大常委会授权开展试点", i: "地产链与消费预期受冲击" },
+    { p: "试点城市与税率预期", i: "地产、家居、家电板块承压" }
+  ],
+  minsheng: [
+    { p: "高层重申支持民营经济", i: "科技成长、民营龙头走高" },
+    { p: "融资与营商环境改善措施", i: "民营企业信心修复，风险偏好抬升" }
+  ],
+  plenum: [
+    { p: "审议通过十五五规划建议", i: "中长期产业主线（新质生产力、安全）" },
+    { p: "科技自立自强与高质量发展目标", i: "科技、军工、高端制造受益" }
+  ]
+};
+
+// 特别事件的具体内容（优先于模板）
+const EVENT_CONTENT = {
+  "sp-election-mid-2026": [
+    { p: "中期选举结果：国会控制权归属（众议院 / 参议院）", i: "若执政党失去国会，财政扩张与减税预期受限，监管与对华政策走向重定价；市场风格切换（成长 ↔ 价值）" },
+    { p: "市场对选举后政策组合的博弈（财政、监管、贸易）", i: "财政收缩预期→美债利率回落；贸易政策延续→出口链、汇率敏感板块波动加大" },
+    { p: "全球资金流向与风险偏好切换", i: "非美资产与新兴市场资金流重新定价，A 股外资流向受牵连" }
+  ],
+  "sp-election-2020": [
+    { p: "拜登胜选，民主党政策方向（财政刺激、绿色能源）", i: "财政刺激与新能源政策预期升温，光伏、新能源车上涨；美元走弱" },
+    { p: "中美关系修复预期", i: "贸易敏感板块波动加大，出口链预期改善" }
+  ],
+  "sp-election-2024": [
+    { p: "特朗普胜选，共和党横扫国会", i: "减税、关税、去监管预期强化；美元走强、美债利率上行" },
+    { p: "对华贸易政策不确定性上升", i: "出口链、汇率敏感板块波动加大；A 股出口链重定价" }
+  ],
+  "sp-mid-2022": [
+    { p: "中期选举结果：共和党夺回众议院", i: "财政与监管预期分化，美股风格短期摆动" }
+  ],
+  "sp-ukraine-2022": [
+    { p: "俄罗斯对乌克兰开展特别军事行动", i: "全球避险升温：股市大跌、原油与黄金暴涨" },
+    { p: "欧美对俄制裁与能源禁运", i: "能源、农产品、军工受益；航空、消费受损" },
+    { p: "地缘风险推升通胀预期", i: "加息预期强化，成长股杀估值" }
+  ],
+  "sp-svb-2023": [
+    { p: "硅谷银行倒闭被监管接管", i: "全球银行股暴跌，避险资产（黄金、美债）大涨" },
+    { p: "美联储 / 财政部兜底存款与流动性工具", i: "市场预期加息节奏放缓，成长股反弹" },
+    { p: "瑞信被瑞银收购", i: "欧洲银行股承压，系统性风险担忧缓和" }
+  ],
+  "sp-bazi-2023": [
+    { p: "哈马斯袭击以色列，中东冲突升级", i: "避险资产上涨，原油、黄金走强" },
+    { p: "冲突扩大预期", i: "军工、能源受益；全球风险资产承压" }
+  ],
+  "sp-924-2024": [
+    { p: "降准降息、下调存量房贷利率、首付比例下调", i: "A 股史诗级暴涨，券商板块涨停潮" },
+    { p: "创设股市支持工具（互换便利、增持再贷款）", i: "流动性预期全面扭转，风险偏好反转" },
+    { p: "政治局会议罕见定调资本市场", i: "市场全面重估，成交额创历史新高" }
+  ],
+  "sp-deepseek-2025": [
+    { p: "DeepSeek-R1 发布：推理成本大幅下降", i: "算力需求逻辑重估，英伟达单日暴跌 17%、AI 硬件链剧震" },
+    { p: "国产大模型能力获得验证", i: "国产算力、AI 应用链受益，科技成长风格强化" },
+    { p: "中美 AI 竞争叙事强化", i: "AI 主题波动加大，国产替代逻辑升温" }
+  ],
+  "sp-tariff-2025": [
+    { p: "美国宣布对贸易伙伴征收对等关税", i: "全球股市大跌、避险资产上涨，A 股出口链重挫" },
+    { p: "中国反制措施与谈判博弈", i: "内需对冲预期升温，消费、基建相对抗跌" }
+  ],
+  "sp-tariff-crash-2025": [
+    { p: "全球关税升级引发抛售", i: "上证单日跌超 7%，全市场普跌、千股跌停" },
+    { p: "国家队增持 ETF、央企回购护盘", i: "4·8 起企稳反弹，情绪逐步修复" },
+    { p: "稳增长与内需政策预期", i: "消费、银行等内需板块相对抗跌" }
+  ],
+  "sp-geneva-2025": [
+    { p: "中美发布日内瓦经贸会谈联合声明", i: "关税缓和预期升温，出口链、航运、消费电子大涨" },
+    { p: "双方建立经贸磋商机制", i: "中美关系缓和的可持续性成为市场关注焦点" }
+  ],
+  "sp-summit-2025": [
+    { p: "中美领导人会晤（釜山）", i: "关系缓和信号，风险偏好抬升，科技与出口链受益" },
+    { p: "关税与科技管制磋商预期", i: "半导体、消费电子估值修复" }
+  ],
+  "sp-liq-2024": [
+    { p: "雪球敲入、两融平仓、量化踩踏", i: "小微盘千股跌停，流动性危机" },
+    { p: "国家队入场买入 ETF、暂停转融券", i: "上证 50 / 沪深 300 相对抗跌，情绪逐步修复" }
+  ],
+  "sp-blackmon-2024": [
+    { p: "日本央行加息 + 美国衰退担忧", i: "日经指数单日暴跌 12%，全球熔断式下跌" },
+    { p: "日元套息交易大规模平仓", i: "全球风险资产连锁抛售" },
+    { p: "市场对美联储降息预期升温", i: "降息交易反弹，8·6 起修复" }
+  ],
+  "sp-baotuan-2021": [
+    { p: "央行流动性边际收紧与资金再平衡", i: "高估值抱团资产承压，茅指数见顶" },
+    { p: "美债收益率上行压制成长股", i: "资金转向周期与中小盘" }
+  ],
+  "sp-0425-2022": [
+    { p: "上海等地疫情封控升级", i: "消费、物流、地产链重挫，上证跌 5.13%" },
+    { p: "人民币汇率快速贬值", i: "外资流出压力加大" },
+    { p: "稳增长政策加码预期", i: "基建、地产链反弹（4·27）" }
+  ],
+  "sp-20tiao-2022": [
+    { p: "优化防疫二十条措施发布", i: "出行链、消费链全面反转" },
+    { p: "核酸 / 隔离政策边际放松", i: "旅游、航空、免税大涨" }
+  ],
+  "sp-xtt-2022": [
+    { p: "取消跨地区流动限制", i: "出行消费链大涨" },
+    { p: "居家隔离替代集中隔离", i: "白酒、免税、旅游爆发" },
+    { p: "经济复苏预期升温", i: "顺周期板块走强" }
+  ],
+  "sp-fedhawk-2024": [
+    { p: "降息 25bp 但点阵图转鹰（下调 2025 年降息次数）", i: "美股大跌、黄金跳水，市场下调降息预期" },
+    { p: "鲍威尔强调放缓步伐", i: "美元指数走强，新兴市场承压" }
+  ],
+  "sp-nfp-2025": [
+    { p: "7 月非农大幅低于预期且前值下修", i: "降息预期升温，美债收益率跳水" },
+    { p: "衰退担忧 vs 降息交易的博弈", i: "美股先跌后涨，波动放大" }
+  ],
+  "sp-shutdown-2025": [
+    { p: "联邦政府恢复运转", i: "财政不确定性缓解，风险偏好修复" },
+    { p: "经济数据发布恢复", i: "数据真空结束，市场定价恢复" }
+  ],
+  "sp-ukldi-2022": [
+    { p: "英国养老金 LDI 危机", i: "英债暴跌、英镑创新低，全球债市波动" },
+    { p: "英央行紧急购债", i: "全球风险资产承压，避险情绪升温" }
+  ],
+  "sp-pelosi-2022": [
+    { p: "佩洛西窜访台湾", i: "地缘紧张，A 股单日大跌" },
+    { p: "军事演训与反制措施", i: "军工、半导体异动" }
+  ],
+  "sp-4th-2025": [
+    { p: "审议通过十五五规划建议", i: "中长期产业主线（新质生产力、科技自立自强）" },
+    { p: "高质量发展与安全发展目标", i: "科技、军工、高端制造受益" }
+  ],
+  "sp-minsheng-2025": [
+    { p: "高层重申支持民营经济", i: "科技成长、民营龙头走高" },
+    { p: "融资与营商环境改善", i: "民营企业信心修复，风险偏好抬升" }
+  ],
+  "sp-rcep-2020": [
+    { p: "15 国正式签署 RCEP", i: "区域贸易壁垒大幅下降，全球最大自贸区落地" },
+    { p: "关税减免与服务业开放", i: "港口物流、跨境电商、纺织服装出口链受益" }
+  ],
+  "sp-eu-2020": [
+    { p: "中欧完成投资协定谈判", i: "中欧经贸合作预期升温" },
+    { p: "市场准入与公平竞争条款", i: "新能源、汽车、化工出口链受益" }
+  ],
+  "sp-anchorage-2021": [
+    { p: "中美高层战略对话（安克雷奇）", i: "中美关系风向标，影响市场风险偏好" },
+    { p: "后续沟通安排", i: "关系缓和预期驱动外资流入" }
+  ],
+  "sp-proptax-2021": [
+    { p: "全国人大常委会授权开展房地产税试点", i: "地产链与消费预期受冲击" },
+    { p: "试点城市与税率预期", i: "地产、家居、家电板块承压" }
+  ],
+  "sp-shuangjian-2021": [
+    { p: "学科类培训不得上市融资 / 资本化", i: "教育股、中概股暴跌" },
+    { p: "行业转型方向", i: "素质教育、职教、AI 教育受益" }
+  ],
+  "sp-evergrande-2021": [
+    { p: "恒大债务违约风险暴露", i: "地产链信用风险：银行、建材、家电承压" },
+    { p: "保交楼与风险化解", i: "地产政策边际宽松预期" }
+  ],
+  "sp-20da-2022": [
+    { p: "报告提出中国式现代化与新发展格局", i: "国产替代、高端制造、安全主题走强" },
+    { p: "人事安排与政策延续性", i: "市场风险偏好修复" }
+  ],
+  "sp-316-2022": [
+    { p: "金融委召开专题会议稳市场", i: "A 股、港股绝地反弹" },
+    { p: "平台经济治理转向常态化", i: "互联网平台股大涨" },
+    { p: "保持经济运行在合理区间", i: "市场情绪修复，外资回流" }
+  ],
+  "sp-stamp-2023": [
+    { p: "证券交易印花税减半征收", i: "交投成本下降，券商板块大涨" },
+    { p: "一揽子活跃资本市场举措", i: "市场情绪短期爆发，次日冲高" }
+  ],
+  "sp-finconf-2023": [
+    { p: "金融高质量发展总基调", i: "金融监管强化预期" },
+    { p: "活跃资本市场、提升上市公司质量", i: "券商板块异动" },
+    { p: "房地产金融风险化解", i: "银行、地产板块反应" }
+  ],
+  "sp-guojukou-2024": [
+    { p: "严把发行上市准入、提高上市标准", i: "壳资源贬值，绩差股承压" },
+    { p: "强化分红、回购与退市", i: "高股息蓝筹走强，市场生态改善" }
+  ],
+  "sp-shooting-2024": [
+    { p: "特朗普遇刺未遂", i: "大选不确定性上升，波动率跳升" },
+    { p: "特朗普胜选概率上升（特朗普交易）", i: "能源、金融、军工走强；美债利率上行" }
+  ],
+  "sp-bidendrop-2024": [
+    { p: "拜登宣布退选", i: "大选交易重新定价，波动率上升" },
+    { p: "哈里斯接棒，政策不确定性", i: "美元、美债波动加大" }
+  ],
+  "sp-1008-2024": [
+    { p: "节前史诗级上涨后的情绪高潮", i: "开盘涨停潮，成交 3.45 万亿创纪录" },
+    { p: "政策预期兑现与获利盘", i: "高开后大幅回落，波动加剧" }
+  ],
+  "sp-inaug-2025": [
+    { p: "就职演说：关税与贸易政策宣示", i: "全球贸易不确定性上升" },
+    { p: "行政令密集签署（关税 / 移民 / 能源）", i: "美股波动、美元走强" },
+    { p: "减税与去监管预期", i: "金融、能源板块走强" }
+  ],
+  "sp-ratecut-2025": [
+    { p: "降准 0.5pct、政策利率下调", i: "流动性宽松，成长股受益" },
+    { p: "房贷利率下调空间打开", i: "地产链、银行板块反应" },
+    { p: "稳增长政策加码信号", i: "市场风险偏好抬升" }
+  ]
+};
+
+// 模板匹配关键词（惯例会议按标题归类）
+const TPL_MAP = [
+  ["全国两会", "lh"], ["中央经济工作会议", "cewc"], ["中央政治局会议", "politics"],
+  ["FOMC", "fomc"], ["欧洲央行", "ecb"], ["日本央行", "boj"], ["达沃斯", "davos"],
+  ["进博会", "cwb"], ["乌镇", "wuzhen"], ["CES", "ces"], ["GTC", "gtc"],
+  ["WWDC", "wwdc"], ["苹果秋季", "apple"], ["COP", "cop"], ["博鳌", "boao"],
+  ["杰克逊霍尔", "jh"], ["WAIC", "waic"], ["广交会", "canton"], ["GDP", "gdp"],
+  ["IMF", "imf"], ["金融工作会议", "finconf"], ["大选", "us_election"], ["中期选举", "us_election"],
+  ["俄乌", "ukraine"], ["降准降息", "ratecut"], ["印花税", "stamp"], ["924", "y2f"],
+  ["国九条", "guojiu"], ["对等关税", "tariff"], ["关税冲击", "tariff_crash"],
+  ["DeepSeek", "deepseek"], ["特朗普就职", "inaug"], ["防疫", "covid"],
+  ["双减", "shuangjian"], ["恒大", "evergrande"], ["硅谷银行", "svb"],
+  ["养老金", "ldi"], ["佩洛西", "pelosi"], ["黑色星期一", "blackmon"],
+  ["抱团", "baotuan"], ["4·25", "apr25"], ["流动性危机", "liq2024"],
+  ["10·8", "oct8"], ["非农", "nfp"], ["停摆结束", "shutdown"], ["鹰派降息", "fedhawk"],
+  ["遇刺", "election_misc"], ["退选", "election_misc"], ["RCEP", "rcep"],
+  ["中欧投资", "eu"], ["安克雷奇", "anchorage"], ["房地产税", "proptax"],
+  ["民营企业", "minsheng"], ["四中全会", "plenum"], ["全会", "plenum"]
+];
+
+function tplKeyOf(title) {
+  for (const [kw, key] of TPL_MAP) {
+    if (title.includes(kw)) return key;
+  }
+  return null;
+}
+
+// 匹配：先查特别事件内容，再按标题匹配模板
+function contentFor(ev) {
+  if (!ev) return null;
+  if (EVENT_CONTENT[ev.id]) return EVENT_CONTENT[ev.id];
+  const key = tplKeyOf(ev.title);
+  return key && TPL[key] ? TPL[key] : null;
+}
+
+// 利好 / 利空方向
+function bullbearFor(ev) {
+  if (!ev) return null;
+  if (EVENT_BB[ev.id]) return EVENT_BB[ev.id];
+  const key = tplKeyOf(ev.title);
+  return key && TPL_BB[key] ? TPL_BB[key] : null;
+}
+
+// 惯例会议的利好 / 利空方向（具体板块）
+const TPL_BB = {
+  lh: { bull: ["半导体/算力/AI 应用（产业政策）", "白酒/家电/免税（扩内需）", "基建/建材（赤字率、专项债）", "券商/银行（流动性预期）"], bear: ["出口链：家电/纺织/汽车零部件（外需）", "高估值防御股（若 GDP 目标低于预期）"] },
+  cewc: { bull: ["半导体/算力/AI 应用、机器人（新质生产力）", "白酒/家电/免税（扩内需）", "券商（流动性预期）"], bear: ["地产链：建材/家居/家电（防风险）", "钢铁/化工/有色（弱需求）"] },
+  politics: { bull: ["顺周期：建材/化工/有色（政策宽松）", "主题：科技/地产/消费（政策预期）"], bear: ["高估值成长：AI 算力/半导体（收紧信号）", "全市场（预期差）"] },
+  fomc: { bull: ["鸽派：黄金/美债、成长股（半导体/AI/创新药）", "降息交易：券商/地产/有色"], bear: ["鹰派：美元走强→高估值成长承压", "新兴市场：港股/北向重仓股"] },
+  ecb: { bull: ["宽松预期：欧股、新兴市场（港股）"], bear: ["欧元走强：欧洲出口股（汽车/机械）"] },
+  boj: { bull: ["日元走弱：日本出口股（汽车/电子）"], bear: ["加息：日元套息交易平仓→全球风险资产承压"] },
+  davos: { bull: ["风险偏好回升：科技/消费（乐观表态）"], bear: ["避险：黄金/美债（地缘/衰退担忧）"] },
+  cwb: { bull: ["免税/跨境电商/进口消费", "物流/港口/上海本地股"], bear: ["（利空有限，关注外资分流）"] },
+  wuzhen: { bull: ["互联网平台（腾讯/阿里概念）", "数据要素/信创/算力 AI"], bear: ["（中性偏多）"] },
+  ces: { bull: ["消费电子/果链/AI 硬件（PC/机器人）"], bear: ["新品不及预期：消费电子利好兑现"] },
+  gtc: { bull: ["AI 算力链：光模块/服务器/PCB/液冷/铜连接"], bear: ["算力格局变化：落后厂商（传统 GPU 链）承压"] },
+  wwdc: { bull: ["果链（立讯/蓝思/歌尔）/软件生态"], bear: ["创新不足：果链回调"] },
+  apple: { bull: ["果链/消费电子/PCB/AI 手机主题"], bear: ["销量不及预期：果链回调"] },
+  cop: { bull: ["光伏/风电/储能/碳交易", "碳中和主题（绿电）"], bear: ["传统能源：煤炭/油气（减排加速转型）"] },
+  boao: { bull: ["海南自贸/免税/旅游", "出口链：家电/机械"], bear: ["（中性）"] },
+  jh: { bull: ["鸽派：成长股（AI/创新药）/黄金"], bear: ["鹰派：美元/美债利率→高估值承压"] },
+  waic: { bull: ["AI 应用/算力/机器人/智能驾驶"], bear: ["主题波动、利好兑现"] },
+  canton: { bull: ["家电/消费电子/纺织服装（出口）", "港口/物流"], bear: ["出口景气下滑：利好兑现"] },
+  gdp: { bull: ["数据超预期：顺周期（建材/化工/有色）/消费（白酒/家电）"], bear: ["不及预期：消费/地产（但强化政策预期）"] },
+  imf: { bull: ["上调预测：全球风险资产/港股"], bear: ["下调预测：新兴市场/大宗商品（有色/原油）"] },
+  finconf: { bull: ["券商（资本市场改革）/银行（估值修复）", "保险"], bear: ["监管收紧：资管/非银金融部分业务"] },
+  us_election: { bull: ["减税/去监管：美股、美元（金融/能源）"], bear: ["关税/对华强硬：出口链（家电/纺织/汽车零部件）、新兴市场"] },
+  ukraine: { bull: ["军工/黄金/煤炭/石油石化/农产品（种业/化肥）"], bear: ["航空/旅游/消费/全球风险资产"] },
+  ratecut: { bull: ["券商/地产/成长股（半导体/AI）", "有色（铜/铝）"], bear: ["银行（息差收窄）"] },
+  stamp: { bull: ["券商/非银金融（情绪）"], bear: ["（无直接利空，注意利好兑现）"] },
+  y2f: { bull: ["券商/保险/地产/建材/白酒（全面反转）"], bear: ["防御板块短期跑输"] },
+  guojiu: { bull: ["高股息：银行/公用事业（电力）/煤炭", "龙头：食品饮料/家电"], bear: ["绩差股/壳资源/次新股/小市值"] },
+  tariff: { bull: ["内需对冲：白酒/家电/基建", "农业（种业/化肥，反制）"], bear: ["出口链：家电/纺织/汽车零部件/消费电子", "航运/港口"] },
+  tariff_crash: { bull: ["内需：白酒/家电/基建", "防御：银行/公用事业"], bear: ["出口链/全市场（短期）"] },
+  deepseek: { bull: ["国产算力（昇腾链）/AI 应用/软件（信创）"], bear: ["英伟达链（光模块/服务器/PCB，短期）"] },
+  inaug: { bull: ["金融（银行/保险）/能源（石油石化）/美股"], bear: ["出口链：家电/纺织/汽车零部件"] },
+  covid: { bull: ["旅游/航空/免税/白酒"], bear: ["防疫产业链短期"] },
+  shuangjian: { bull: ["素质教育/职教/教育信息化"], bear: ["K12 教育股/中概教育"] },
+  evergrande: { bull: ["（风险化解后）地产/建材"], bear: ["银行/建材/家居/家电"] },
+  svb: { bull: ["黄金/美债/成长股（半导体/AI，降息预期）"], bear: ["银行/券商（金融板块）"] },
+  ldi: { bull: ["黄金/美债"], bear: ["全球债市/风险资产（短期）"] },
+  pelosi: { bull: ["军工（军工电子/船舶）/半导体（自主可控）"], bear: ["A 股短期/出口链"] },
+  blackmon: { bull: ["（降息交易）成长股/黄金"], bear: ["全球风险资产/出口链/港股"] },
+  baotuan: { bull: ["周期（建材/化工/有色）/中小盘/低估值"], bear: ["茅指数/高估值抱团（白酒/新能源）"] },
+  apr25: { bull: ["基建/地产/建材（稳增长）"], bear: ["消费/物流/地产链（短期）"] },
+  liq2024: { bull: ["大盘蓝筹/权重（银行/食品饮料）"], bear: ["小微盘/量化重仓股/题材股"] },
+  oct8: { bull: ["券商/科技（短期情绪）"], bear: ["高开回落/获利盘兑现"] },
+  nfp: { bull: ["降息交易：成长/黄金/美债"], bear: ["衰退担忧：周期（短期）"] },
+  shutdown: { bull: ["风险偏好修复：科技/消费"], bear: ["（无）"] },
+  fedhawk: { bull: ["银行/价值（利率上行）"], bear: ["成长股（半导体/AI）/黄金/新兴市场"] },
+  election_misc: { bull: ["特朗普交易：能源（石油石化）/金融/军工"], bear: ["高估值成长（波动率上升）"] },
+  rcep: { bull: ["港口/物流/跨境电商/纺织服装"], bear: ["（中性）"] },
+  eu: { bull: ["新能源（光伏/储能）/汽车零部件/化工"], bear: ["（中性偏多）"] },
+  anchorage: { bull: ["外资流入：白酒/家电"], bear: ["出口链/军工（若紧张）"] },
+  proptax: { bull: ["（试点后）刚需/建材"], bear: ["地产/家居/家电"] },
+  minsheng: { bull: ["科技成长（半导体/AI）/民营龙头"], bear: ["（无）"] },
+  plenum: { bull: ["科技（半导体/AI）/军工/高端制造（机器人/低空）"], bear: ["短期高估值（主题切换）"] }
+};
+
+// 特别事件的利好 / 利空方向（具体板块）
+const EVENT_BB = {
+  "sp-election-mid-2026": { bull: ["若政策转向：消费（白酒/家电）/内需", "若对华缓和：出口链/科技"], bear: ["若财政收缩：高估值成长", "若贸易强硬：出口链/汇率敏感"] },
+  "sp-election-2020": { bull: ["光伏/新能源车/消费（新能源政策）"], bear: ["传统能源（短期）/美元"] },
+  "sp-election-2024": { bull: ["美股/美元（金融/能源）"], bear: ["出口链/新兴市场/港股"] },
+  "sp-mid-2022": { bull: ["（政策预期）中性"], bear: ["波动率上升"] },
+  "sp-ukraine-2022": { bull: ["军工/黄金/煤炭/石油石化/种业"], bear: ["航空/消费/全球风险资产"] },
+  "sp-svb-2023": { bull: ["黄金/美债/成长股（半导体/AI，降息预期）"], bear: ["银行/券商/区域银行"] },
+  "sp-bazi-2023": { bull: ["军工/石油石化/黄金"], bear: ["全球风险资产（短期）"] },
+  "sp-924-2024": { bull: ["券商/地产/白酒/半导体（全面反转）"], bear: ["防御板块（短期跑输）"] },
+  "sp-deepseek-2025": { bull: ["国产算力（昇腾链）/AI 应用/信创"], bear: ["英伟达链（光模块/服务器/PCB）"] },
+  "sp-tariff-2025": { bull: ["内需：白酒/家电/基建；农业（种业/化肥）"], bear: ["出口链：家电/纺织/汽车零部件/消费电子"] },
+  "sp-tariff-crash-2025": { bull: ["内需/防御（银行/公用事业）"], bear: ["全市场（短期）/出口链"] },
+  "sp-geneva-2025": { bull: ["出口链（家电/纺织/汽车零部件）/航运/消费电子"], bear: ["（利好为主）"] },
+  "sp-summit-2025": { bull: ["科技（半导体/消费电子）/出口链"], bear: ["（短期无）"] },
+  "sp-liq-2024": { bull: ["大盘蓝筹（银行/食品饮料）"], bear: ["小微盘/量化股/题材股"] },
+  "sp-blackmon-2024": { bull: ["（降息交易）成长/黄金"], bear: ["全球风险资产/出口链"] },
+  "sp-baotuan-2021": { bull: ["周期（建材/化工/有色）/中小盘/低估值"], bear: ["茅指数（白酒/新能源）/高估值"] },
+  "sp-0425-2022": { bull: ["基建/地产/建材（稳增长）"], bear: ["消费/物流/地产链"] },
+  "sp-20tiao-2022": { bull: ["旅游/航空/免税/白酒"], bear: ["（核酸等短期）"] },
+  "sp-xtt-2022": { bull: ["旅游/航空/免税/白酒/电影"], bear: ["（核酸等短期）"] },
+  "sp-fedhawk-2024": { bull: ["银行/价值（利率上行）"], bear: ["成长（半导体/AI）/黄金/新兴市场"] },
+  "sp-nfp-2025": { bull: ["降息交易：成长/黄金"], bear: ["衰退担忧：周期（短期）"] },
+  "sp-shutdown-2025": { bull: ["风险偏好修复：科技/消费"], bear: ["（无）"] },
+  "sp-ukldi-2022": { bull: ["黄金/美债"], bear: ["全球债市/风险资产"] },
+  "sp-pelosi-2022": { bull: ["军工（军工电子/船舶）/半导体（自主可控）"], bear: ["A 股短期/出口链"] },
+  "sp-4th-2025": { bull: ["科技（半导体/AI）/军工/高端制造（机器人/低空）"], bear: ["短期高估值（主题切换）"] },
+  "sp-minsheng-2025": { bull: ["科技成长（半导体/AI）/民营龙头"], bear: ["（无）"] },
+  "sp-rcep-2020": { bull: ["港口/物流/跨境电商/纺织服装"], bear: ["（中性）"] },
+  "sp-eu-2020": { bull: ["光伏/储能/汽车零部件/化工"], bear: ["（中性）"] },
+  "sp-anchorage-2021": { bull: ["外资流入：白酒/家电"], bear: ["出口链/军工（若紧张）"] },
+  "sp-proptax-2021": { bull: ["（试点后）刚需/建材"], bear: ["地产/家居/家电"] },
+  "sp-shuangjian-2021": { bull: ["素质教育/职教"], bear: ["K12 教育/中概教育"] },
+  "sp-evergrande-2021": { bull: ["（化解后）地产/建材"], bear: ["银行/建材/家居/家电"] },
+  "sp-20da-2022": { bull: ["半导体（国产替代）/军工/高端制造"], bear: ["（短期主题波动）"] },
+  "sp-316-2022": { bull: ["互联网平台（腾讯/阿里概念）/券商"], bear: ["（短期无）"] },
+  "sp-stamp-2023": { bull: ["券商/非银（情绪）"], bear: ["（利好兑现风险）"] },
+  "sp-finconf-2023": { bull: ["券商/银行"], bear: ["部分业务监管利空"] },
+  "sp-guojukou-2024": { bull: ["高股息（银行/公用事业）/龙头（食品饮料/家电）"], bear: ["绩差股/壳资源/次新股"] },
+  "sp-shooting-2024": { bull: ["能源（石油石化）/金融/军工（特朗普交易）"], bear: ["高估值成长（波动）"] },
+  "sp-bidendrop-2024": { bull: ["（政策不明）中性"], bear: ["波动率上升"] },
+  "sp-1008-2024": { bull: ["券商/科技（短期情绪）"], bear: ["高开回落/获利盘"] },
+  "sp-inaug-2025": { bull: ["金融（银行/保险）/能源（石油石化）/美股"], bear: ["出口链/新兴市场"] },
+  "sp-ratecut-2025": { bull: ["成长（半导体/AI）/券商/地产"], bear: ["银行（息差）"] }
+};
+
+/* ============ 1.3 数据发布类事件的往期数据（对比用）============ */
+const EVENT_DATA = [
+  {
+    match: ["GDP"],
+    title: "中国 GDP 同比增速（季度）",
+    head: ["季度", "同比增速"],
+    rows: [
+      ["2024Q1", "5.3%"], ["2024Q2", "4.7%"], ["2024Q3", "4.6%"], ["2024Q4", "5.4%"],
+      ["2025Q1", "5.4%"], ["2025Q2", "5.2%"], ["2025Q3", "4.8%"], ["2025Q4", "5.0%"]
+    ],
+    note: "公开历史数据（2024 年全年 5.0%、2025 年全年 5.0%），供发布前对比参考。"
+  },
+  {
+    match: ["非农"],
+    title: "美国非农就业（月度新增）",
+    head: ["月份", "新增非农"],
+    rows: [
+      ["2024 年月均", "约 18.6 万"],
+      ["2025-07", "7.3 万（初值，含前值下修）"],
+      ["2025-08", "2.2 万"]
+    ],
+    note: "公开历史数据。非农初值常被大幅修正，关注「初值与修正值」差异对降息预期的影响。"
+  },
+  {
+    match: ["台积电"],
+    title: "台积电年度营收（半导体景气领先指标）",
+    head: ["年度", "营收"],
+    rows: [
+      ["2022", "约 2.26 万亿新台币（同比 +42%）"],
+      ["2023", "约 2.16 万亿新台币（同比 -4.5%）"],
+      ["2024", "约 2.89 万亿新台币（同比 +30%）"]
+    ],
+    note: "公开历史数据；台积电营收与 AI/HPC 需求高度相关，是半导体链景气拐点的领先信号。"
+  }
+];
+
+function dataTableFor(ev) {
+  for (const t of EVENT_DATA) {
+    if (t.match.some(kw => ev.title.includes(kw))) return t;
+  }
+  return null;
+}
+
+/* 惯例会议按年份循环生成（日期取惯例值，仅作历史回顾）；特别事件用真实日期。 */
+function isoHis(y, mo, d, h, mi){
+  return y + "-" + String(mo).padStart(2,"0") + "-" + String(d).padStart(2,"0") +
+         "T" + String(h).padStart(2,"0") + ":" + String(mi).padStart(2,"0") + ":00+08:00";
+}
+const HISTORY = (function buildHistory(){
+  const list = [];
+  const add = (id, title, org, region, cat, level, start, impact, note) =>
+    list.push({ id, title, org, region, cat, level, start, end: start, impact, note });
+
+  for (let y = 2020; y <= 2026; y++) {
+    add("h-lh-"+y, "全国两会", "北京", "cn", "policy", "S", y === 2020 ? isoHis(y,5,22,9,0) : isoHis(y,3,5,9,0),
+      "政府工作报告定调全年 GDP 目标与财政赤字率，全面影响 A 股与人民币资产。",
+      y === 2020 ? "2020 年因疫情推迟至 5 月 22 日开幕。" : "3 月 5 日开幕（全国人大惯例）。");
+    add("h-pol4-"+y, "中央政治局会议（经济形势分析）", "中共中央 · 北京", "cn", "policy", "A", isoHis(y,4,30,9,0),
+      "一季度数据后的政策定调，常引发 A 股板块轮动。", "4 月底召开（惯例）。");
+    add("h-pol7-"+y, "中央政治局会议（经济形势分析）", "中共中央 · 北京", "cn", "policy", "A", isoHis(y,7,30,9,0),
+      "年中经济定调，部署下半年政策。", "7 月底召开（惯例）。");
+    add("h-pol12-"+y, "中央政治局会议（经济形势分析）", "中共中央 · 北京", "cn", "policy", "A", isoHis(y,12,8,9,0),
+      "为中央经济工作会议与下一年政策定调。", "12 月上旬召开（惯例）。");
+    add("h-cewc-"+y, "中央经济工作会议", "中共中央 · 北京", "cn", "policy", "S", isoHis(y,12,10,9,0),
+      "年度最高级别经济会议，定调下一年政策基调与重点任务。", "12 月中旬召开（各年 12/8—12/18 之间，此处取惯例日）。");
+    add("h-davos-"+y, "达沃斯世界经济论坛年会", "瑞士 · 达沃斯", "global", "macro", "A", isoHis(y,1,20,16,0),
+      "全球风险偏好与跨国投资情绪的温度计。", "1 月第三周召开（惯例；2022 年因疫情推迟至 5 月）。");
+    add("h-ces-"+y, "CES 国际消费电子展", "美国 · 拉斯维加斯", "global", "tech", "A", isoHis(y,1,6,9,0),
+      "AI 硬件与消费电子年度风向标。", "1 月初举办（惯例；2021 年线上举办）。");
+    add("h-gtc-"+y, "英伟达 GTC 大会", "美国 · 圣何塞", "global", "tech", "A", isoHis(y,3,17,9,0),
+      "AI 算力与芯片路线图发布，牵引科技主线。", "3 月中旬举办（惯例）。");
+    add("h-wwdc-"+y, "苹果 WWDC 开发者大会", "美国 · 库比蒂诺", "global", "tech", "A", isoHis(y,6,9,0,30),
+      "系统生态与 AI 功能发布，牵动果链与软件生态估值。", "6 月上旬举办（惯例）。");
+    add("h-apple-"+y, "苹果秋季新品发布会", "美国 · 库比蒂诺", "global", "tech", "A", isoHis(y,9,9,0,30),
+      "新 iPhone 发布，果链与消费电子主题的核心催化。", "9 月上旬举办（惯例）。");
+    add("h-cwb-"+y, "中国国际进口博览会（进博会）", "上海", "cn", "macro", "A", isoHis(y,11,5,9,0),
+      "全球采购与消费升级主题，利好进口消费与跨境电商。", "11 月 5—10 日举办（惯例）。");
+    add("h-wuzhen-"+y, "世界互联网大会 · 乌镇峰会", "浙江乌镇", "cn", "tech", "A", isoHis(y,11,8,9,0),
+      "数字经济与互联网治理风向标。", "11 月举办（惯例；2024 年 11 月 19—22 日召开）。");
+    add("h-boao-"+y, "博鳌亚洲论坛年会", "海南 · 博鳌", "cn", "macro", "B", isoHis(y,3,26,9,0),
+      "亚洲经贸合作与自贸信号。", "3 月下旬举办（惯例；2021—2022 年因疫情调整）。");
+    add("h-jh-"+y, "杰克逊霍尔全球央行年会", "美国 · 怀俄明州", "us", "policy", "A", isoHis(y,8,24,22,0),
+      "美联储政策信号的重要场，全球利率预期关键节点。", "8 月下旬举办（惯例）。");
+    add("h-waic-"+y, "世界人工智能大会（WAIC）", "上海", "cn", "tech", "B", isoHis(y,7,8,9,0),
+      "AI 应用落地与产业政策风向。", "7 月举办（惯例）。");
+    add("h-canton4-"+y, "广交会（春季）", "广州", "cn", "macro", "B", isoHis(y,4,15,9,0),
+      "出口订单与外贸景气度的晴雨表。", "4 月举办（惯例）。");
+    add("h-canton10-"+y, "广交会（秋季）", "广州", "cn", "macro", "B", isoHis(y,10,15,9,0),
+      "出口订单与外贸景气度的晴雨表。", "10 月举办（惯例）。");
+    add("h-gdp7-"+y, "中国二季度 GDP 数据公布", "国家统计局", "cn", "data", "A", isoHis(y,7,15,10,0),
+      "经济增速与政策空间的重要验证点。", "7 月中旬公布（惯例）。");
+    add("h-preann-"+y, "年报业绩预告截止（暴雷高发期）", "沪深交易所", "cn", "data", "A", isoHis(y,1,31,9,0),
+      "业绩预告密集披露，暴雷与超预期频发，绩差小盘股波动加大。", "每年 1 月底为年报业绩预告披露截止。");
+    add("h-annual-"+y, "年报披露截止 + ST 风险警示潮", "沪深交易所", "cn", "data", "A", isoHis(y,4,30,9,0),
+      "年报收官后戴帽/退市风险集中暴露，ST 板块与绩差小盘股承压。", "每年 4 月 30 日为年报披露截止日，5 月起密集 ST。");
+    add("h-mid-"+y, "半年报披露高峰", "沪深交易所", "cn", "data", "B", isoHis(y,8,31,9,0),
+      "半年报收官，业绩兑现与分红方案影响板块轮动。", "每年 8 月 31 日为半年报披露截止。");
+    add("h-q3-"+y, "三季报披露截止", "沪深交易所", "cn", "data", "B", isoHis(y,10,31,9,0),
+      "三季报收官，全年业绩预期修正。", "每年 10 月 31 日为三季报披露截止。");
+    const fomc = [[3,17,"3 月"],[6,16,"6 月"],[9,15,"9 月"],[12,8,"12 月"]];
+    fomc.forEach(([mo,dd,label]) => {
+      add("h-fomc-"+y+"-"+mo, "美联储 FOMC 议息会议（"+label+"）", "美国联邦储备委员会 · 华盛顿", "us", "policy", "S", isoHis(y,mo,dd+1,3,0),
+        "利率决议影响全球风险资产定价。", "决议于会期次日下午发布（北京时间凌晨 3 点）。");
+    });
+    add("h-ecb-"+y, "欧洲央行（ECB）议息会议", "德国 · 法兰克福", "eu", "policy", "A", isoHis(y,6,12,21,15),
+      "欧元区利率与购债信号，影响美元指数与欧股。", "6 月召开（惯例之一）。");
+    add("h-boj-"+y, "日本央行（BOJ）议息会议", "日本 · 东京", "jp", "policy", "A", isoHis(y,4,26,12,0),
+      "日元套息交易的风向标。", "4 月召开（惯例之一）。");
+    if (y >= 2021) {
+      add("h-cop-"+y, "COP 联合国气候大会", "全球（主办地轮换）", "global", "macro", "A", isoHis(y,11,9,10,0),
+        "全球减排议程，牵引新能源、碳交易与能源板块。", "11—12 月召开（主办地每年轮换）。");
+    }
+  }
+
+  // 特别事件（真实日期）
+  const specials = [
+    ["sp-election-2020", "美国大选（拜登胜选）", "美国", "us", "policy", "S", isoHis(2020,11,3,9,0),
+      "大选结果影响全球风险偏好与中美关系预期。", "2020-11-03 投票日，11-07 媒体预测拜登胜选。"],
+    ["sp-rcep-2020", "RCEP 签署（区域全面经济伙伴关系协定）", "亚太 15 国", "global", "macro", "A", isoHis(2020,11,15,10,0),
+      "全球最大自贸区落地，利好出口链与港口物流。", "2020-11-15 以视频方式签署。"],
+    ["sp-eu-2020", "中欧投资协定谈判完成", "中欧", "global", "macro", "A", isoHis(2020,12,30,18,0),
+      "中欧经贸合作预期升温，利好外贸与跨境物流。", "2020-12-30 双方宣布完成谈判。"],
+    ["sp-anchorage-2021", "中美高层战略对话（安克雷奇）", "美国 · 安克雷奇", "us", "macro", "A", isoHis(2021,3,18,9,0),
+      "中美关系风向标，影响市场风险偏好。", "2021-03-18 举行。"],
+    ["sp-shuangjian-2021", "“双减”政策印发", "北京", "cn", "policy", "S", isoHis(2021,7,24,10,0),
+      "教育行业格局巨变，引发中概教育股暴跌与相关板块重估。", "2021-07-24 发布《关于进一步减轻义务教育阶段学生作业负担和校外培训负担的意见》。"],
+    ["sp-proptax-2021", "房地产税改革试点授权", "北京", "cn", "policy", "A", isoHis(2021,10,23,10,0),
+      "房地产税试点预期升温，影响地产链与消费预期。", "2021-10-23 全国人大常委会作出授权决定。"],
+    ["sp-316-2022", "国务院金融委专题会议（“3·16”行情）", "北京", "cn", "policy", "S", isoHis(2022,3,16,13,0),
+      "高层喊话稳市场，A 股与港股当日大幅反弹。", "2022-03-16 金融委召开专题会议研究当前经济形势与资本市场。"],
+    ["sp-20da-2022", "党的二十大开幕", "北京", "cn", "policy", "S", isoHis(2022,10,16,10,0),
+      "决定未来五年大政方针，超级政治事件。", "2022-10-16 开幕，10-22 闭幕。"],
+    ["sp-xtt-2022", "防疫“新十条”发布", "北京", "cn", "policy", "S", isoHis(2022,12,7,15,0),
+      "防疫政策优化，消费与出行板块预期反转。", "2022-12-07 发布优化落实疫情防控“新十条”。"],
+    ["sp-stamp-2023", "证券交易印花税减半征收", "北京", "cn", "policy", "S", isoHis(2023,8,27,18,0),
+      "活跃资本市场重磅举措，A 股次日大涨。", "2023-08-27 财政部、税务总局公告自 8 月 28 日起减半征收。"],
+    ["sp-finconf-2023", "中央金融工作会议", "北京", "cn", "policy", "A", isoHis(2023,10,30,10,0),
+      "金融领域最高规格会议，定调金融改革与监管方向。", "2023-10-30—31 召开。"],
+    ["sp-guojukou-2024", "新“国九条”发布", "北京", "cn", "policy", "S", isoHis(2024,4,12,17,0),
+      "资本市场改革纲领性文件，重塑市场生态。", "2024-04-12 国务院印发《关于加强监管防范风险推动资本市场高质量发展的若干意见》。"],
+    ["sp-924-2024", "一揽子增量政策发布会（“924”行情）", "北京", "cn", "policy", "S", isoHis(2024,9,24,9,0),
+      "降准降息、稳楼市股市组合拳，A 股史上罕见大涨。", "2024-09-24 国新办发布会宣布一揽子政策。"],
+    ["sp-election-2024", "美国大选（特朗普胜选）", "美国", "us", "policy", "S", isoHis(2024,11,5,14,0),
+      "大选结果影响全球贸易与资产定价。", "2024-11-05 投票日，特朗普胜选。"],
+    ["sp-inaug-2025", "特朗普就职典礼", "美国 · 华盛顿", "us", "policy", "A", isoHis(2025,1,20,23,0),
+      "关税与外交政策预期随即展开，影响全球风险偏好。", "2025-01-20 宣誓就职。"],
+    ["sp-tariff-2025", "美国“对等关税”落地", "美国", "us", "macro", "S", isoHis(2025,4,2,21,0),
+      "全球贸易摩擦升级，出口链与风险资产剧烈波动。", "2025-04-02 宣布对贸易伙伴征收“对等关税”。"],
+    ["sp-ratecut-2025", "央行宣布降准降息", "北京", "cn", "policy", "A", isoHis(2025,5,7,9,0),
+      "货币政策宽松，稳增长与股市流动性双利好。", "2025-05-07 宣布降准 0.5 个百分点、7 天逆回购利率下调 10 个基点等。"],
+    ["sp-4th-2025", "二十届四中全会（十五五规划建议）", "北京", "cn", "policy", "S", isoHis(2025,10,20,9,0),
+      "谋划“十五五”时期发展蓝图，影响中长期产业主线。", "2025-10-20—23 召开，审议通过“十五五”规划建议。"]
+  ];
+  // 极致反转级事件（对市场造成剧烈反转的时点）
+  const flash = [
+    ["sp-mid-2022", "美国中期选举", "美国", "us", "policy", "A", isoHis(2022,11,8,9,0),
+      "国会控制权易手影响财政与监管预期，美股与全球风险偏好波动。", "2022-11-08 举行，共和党夺回众议院。"],
+    ["sp-baotuan-2021", "抱团股瓦解（茅指数见顶）", "A 股", "cn", "tech", "S", isoHis(2021,2,18,9,0),
+      "春节后首个交易日核心资产集体重挫，A 股风格从抱团转向周期与中小盘。", "2021-02-18 节后首日，茅台、宁德时代等抱团股大跌。"],
+    ["sp-evergrande-2021", "恒大债务危机发酵", "香港 / 中国恒大", "cn", "macro", "A", isoHis(2021,9,20,9,0),
+      "地产链信用风险冲击，港股内房股与 A 股地产链重挫。", "2021-09-20 恒大股价暴跌，债券违约风险升温。"],
+    ["sp-ukraine-2022", "俄乌冲突爆发", "俄罗斯 / 乌克兰", "global", "macro", "S", isoHis(2022,2,24,9,0),
+      "地缘风险与能源价格暴涨，全球股市与 A 股剧烈波动。", "2022-02-24 俄罗斯宣布对乌克兰开展特别军事行动。"],
+    ["sp-0425-2022", "上海疫情与人民币贬值冲击（“4·25”大跌）", "上海", "cn", "policy", "A", isoHis(2022,4,25,9,0),
+      "封控升级与汇率压力，A 股单日大跌，随后政策预期修复。", "2022-04-25 上证指数跌 5.13%。"],
+    ["sp-20tiao-2022", "防疫“二十条”优化", "北京", "cn", "policy", "S", isoHis(2022,11,11,10,0),
+      "防疫边际优化，出行链、消费链全面反弹。", "2022-11-11 发布进一步优化疫情防控的二十条措施。"],
+    ["sp-svb-2023", "硅谷银行倒闭", "美国 · 加州", "us", "macro", "S", isoHis(2023,3,10,9,0),
+      "银行体系风险暴露，全球金融股暴跌，避险资产大涨。", "2023-03-10 硅谷银行被监管机构接管。"],
+    ["sp-bazi-2023", "巴以冲突爆发", "中东", "global", "macro", "A", isoHis(2023,10,7,10,0),
+      "中东地缘风险升温，推升避险情绪与原油价格。", "2023-10-07 新一轮巴以冲突爆发。"],
+    ["sp-liq-2024", "小微盘流动性危机（“2·5”见底）", "A 股", "cn", "policy", "S", isoHis(2024,2,5,9,0),
+      "量化与雪球敲入引发流动性踩踏，A 股千股跌停，随后政策托底反弹。", "2024-02-05 沪指盘中一度跌破 2700 点，2-06 起回暖。"],
+    ["sp-blackmon-2024", "全球股市“黑色星期一”", "日本 / 全球", "global", "macro", "S", isoHis(2024,8,5,9,0),
+      "日经指数暴跌 12%，全球风险资产熔断式下跌，A 股承压。", "2024-08-05 日经 225 单日跌 12.4%。"],
+    ["sp-1008-2024", "国庆后史诗级高开（“10·8”行情）", "A 股", "cn", "policy", "A", isoHis(2024,10,8,9,0),
+      "史诗级高开后剧烈震荡，成交额 3.45 万亿创历史纪录。", "2024-10-08 A 股涨停潮开盘、随后大幅回落。"],
+    ["sp-deepseek-2025", "DeepSeek 冲击波（全球 AI 股重挫）", "中国 / 全球", "global", "tech", "S", isoHis(2025,1,27,9,0),
+      "国产大模型引发算力逻辑重估，英伟达单日暴跌 17%，AI 链剧烈波动。", "2025-01-27 英伟达市值单日蒸发约 5900 亿美元。"],
+    ["sp-minsheng-2025", "民营企业座谈会", "北京", "cn", "policy", "A", isoHis(2025,2,17,10,0),
+      "高层重申支持民营经济，科技成长股全面走高。", "2025-02-17 民营企业座谈会在北京召开。"],
+    ["sp-tariff-crash-2025", "“关税冲击”黑色星期一（A 股 4·7）", "A 股", "cn", "macro", "S", isoHis(2025,4,7,9,0),
+      "对等关税落地引发全球抛售，A 股单日暴跌，随后政策与国家队托底。", "2025-04-07 上证指数跌超 7%，全市场普跌。"],
+    ["sp-geneva-2025", "中美日内瓦经贸会谈联合声明", "日内瓦", "us", "macro", "A", isoHis(2025,5,12,9,0),
+      "关税缓和预期升温，出口链、航运与消费股反弹。", "2025-05-12 中美发布经贸会谈联合声明。"],
+    ["sp-summit-2025", "中美元首会晤（釜山）", "韩国 · 釜山", "us", "macro", "A", isoHis(2025,10,30,10,0),
+      "元首外交确认关系缓和信号，市场风险偏好抬升。", "2025-10-30 中美领导人釜山会晤。"],
+    ["sp-election-mid-2026", "美国中期选举", "美国", "us", "policy", "S", isoHis(2026,11,3,9,0),
+      "国会控制权归属决定财政与监管走向，全球风险资产剧烈重定价。", "2026-11-03 举行中期选举。"],
+    ["sp-pelosi-2022", "佩洛西窜访台湾（地缘风波）", "中国台湾", "cn", "macro", "A", isoHis(2022,8,2,9,0),
+      "地缘紧张升级，军工、半导体异动，A 股单日大跌后修复。", "2022-08-02 佩洛西窜访台湾。"],
+    ["sp-ukldi-2022", "英国养老金危机（LDI 风暴）", "英国", "uk", "macro", "A", isoHis(2022,9,26,9,0),
+      "英债与英镑暴跌，全球债市波动，风险资产承压。", "2022-09-26 英国养老金 LDI 危机，央行紧急购债。"],
+    ["sp-shooting-2024", "特朗普遇刺事件", "美国 · 宾州", "us", "policy", "A", isoHis(2024,7,13,9,0),
+      "大选格局突变，特朗普交易升温，美股与美债波动。", "2024-07-13 特朗普竞选集会遇袭。"],
+    ["sp-bidendrop-2024", "拜登宣布退选", "美国", "us", "policy", "A", isoHis(2024,7,21,9,0),
+      "大选不确定性重新定价，市场重新博弈两党政策。", "2024-07-21 拜登宣布退出 2024 年总统竞选。"],
+    ["sp-fedhawk-2024", "美联储“鹰派降息”（12·18）", "美国", "us", "policy", "A", isoHis(2024,12,18,9,0),
+      "点阵图暗示 2025 年降息放缓，美股与黄金大跌。", "2024-12-18 降息 25bp 但暗示放缓，纳指单日跌超 3%。"],
+    ["sp-nfp-2025", "非农数据爆冷（8·1）", "美国", "us", "macro", "A", isoHis(2025,8,1,9,0),
+      "就业数据远低预期，降息预期升温，美股大跌、美债收益率跳水。", "2025-08-01 7 月非农初值仅 7.3 万且前值大幅下修。"],
+    ["sp-shutdown-2025", "美国联邦政府停摆结束", "美国", "us", "policy", "A", isoHis(2025,11,12,9,0),
+      "停摆结束缓解财政与数据发布不确定性，风险偏好修复。", "2025-11-12 特朗普签署结束停摆法案，恢复政府运转。"]
+  ];
+  flash.forEach(s => {
+    list.push({ id:s[0], title:s[1], org:s[2], region:s[3], cat:s[4], level:s[5], start:s[6], end:s[6], impact:s[7], note:s[8], hot:true });
+  });
+  specials.forEach(s => {
+    list.push({ id:s[0], title:s[1], org:s[2], region:s[3], cat:s[4], level:s[5], start:s[6], end:s[6], impact:s[7], note:s[8], hot:true });
+  });
+
+  list.sort((a,b) => Date.parse(a.start) - Date.parse(b.start));
+  return list;
+})();
+
+/* ============ 2. 工具函数 ============ */
+const WEEK = ["日","一","二","三","四","五","六"];
+const LS_KEY = "eventRadar.v1";
+const now = () => Date.now();
+
+function fmtDate(ts){
+  const d = new Date(ts);
+  return d.getFullYear() + "年" + (d.getMonth()+1) + "月" + d.getDate() + "日（周" + WEEK[d.getDay()] + "）" +
+         " " + String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+}
+function fmtDateOnly(ts){
+  const d = new Date(ts);
+  return d.getFullYear() + "年" + (d.getMonth()+1) + "月" + d.getDate() + "日（周" + WEEK[d.getDay()] + "）";
+}
+const REGION_BADGE = { cn:"🇨🇳 国内", us:"🇺🇸 美国", eu:"🇪🇺 欧洲", jp:"🇯🇵 日本", uk:"🇬🇧 英国", global:"🌍 全球" };
+const CAT_BADGE = { policy:"🏦 政策·央行", tech:"💡 科技", macro:"🌐 宏观", data:"📊 数据" };
+
+/* ============ 3. 提醒设置存储 ============ */
+function loadStore(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { defaultLeadDays:3, settings:{} };
+}
+let store = loadStore();
+function saveStore(){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(store)); }catch(e){}
+}
+function getSetting(id){
+  if(!store.settings[id]){
+    store.settings[id] = { enabled:false, leadDays:store.defaultLeadDays, leadHours:0, fired:null };
+  }
+  return store.settings[id];
+}
+function leadMs(s){ return (Math.max(0, Number(s.leadDays)||0)*86400 + Math.max(0, Number(s.leadHours)||0)*3600) * 1000; }
+function firedKeyOf(s){ return (Number(s.leadDays)||0) + "d" + (Number(s.leadHours)||0) + "h"; }
+
+/* ============ 4. 渲染卡片 ============ */
+const cardsEl = document.getElementById("cards");
+let filter = "all";
+let view = "future";      // future 未来 / history 历史
+let histEnd = null;       // 历史窗口终点（YYYY-MM-DD）
+
+function isoLocal(d){
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+const TODAY = isoLocal(new Date());
+const MIN_HIST = (function(){ // 最多回溯 6 年
+  const d = new Date(); d.setFullYear(d.getFullYear() - 6);
+  return isoLocal(d);
+})();
+function histWindow(){
+  const end = Date.parse(histEnd + "T23:59:59+08:00");
+  const start = end - 365 * 86400 * 1000;
+  return { start, end };
+}
+
+function statusOf(m){
+  const t = now();
+  if(t < Date.parse(m.start)) return "upcoming";
+  if(t <= Date.parse(m.end)) return "live";
+  return "past";
+}
+
+function cdParts(ms){
+  const s = Math.max(0, Math.floor(ms/1000));
+  const d = Math.floor(s/86400), h = Math.floor(s%86400/3600), mi = Math.floor(s%3600/60), se = s%60;
+  return { d, h, mi, se };
+}
+
+function cdHtml(m, withSeconds){
+  const st = statusOf(m);
+  if(st === "past") return '<span class="done">已结束</span>';
+  if(st === "live") return '<span class="live">● 进行中</span>';
+  const p = cdParts(Date.parse(m.start) - now());
+  let h = "";
+  h += '<div class="num">' + p.d + '</div><span class="u">天</span>';
+  h += '<div class="num">' + p.h + '</div><span class="u">时</span>';
+  h += '<div class="num">' + p.mi + '</div><span class="u">分</span>';
+  if(withSeconds) h += '<div class="num">' + p.se + '</div><span class="u">秒</span>';
+  return '<span class="cd">' + h + '</span>';
+}
+
+function cardHtml(m, isHist){
+  const s = isHist ? { enabled:false, leadDays:0, leadHours:0, fired:null } : getSetting(m.id);
+  const st = statusOf(m);
+  const fired = !isHist && s.fired === firedKeyOf(s) && s.fired !== null;
+  const regionCls = (m.region === "cn") ? "cn" : "overseas";
+  const alerted = s.enabled;
+  const cdbox = isHist
+    ? '<div class="cdbox"><span class="done">📜 已发生 · 历史回顾</span></div>'
+    : '<div class="cdbox">' + cdHtml(m, true) + '</div>';
+  const remindHtml = isHist
+    ? '<div class="remind"><span class="fired">📜 历史回顾 · 已发生</span></div>'
+    : '<div class="remind">' +
+        '<label><input type="checkbox" class="remind-on" ' + (s.enabled ? "checked" : "") + '> 提醒我</label>' +
+        '<span>提前</span>' +
+        '<input type="number" class="r-days" min="0" max="365" value="' + (s.leadDays ?? 3) + '">' +
+        '<span class="unit">天</span>' +
+        '<input type="number" class="r-hours" min="0" max="23" value="' + (s.leadHours ?? 0) + '">' +
+        '<span class="unit">小时</span>' +
+        (fired ? '<span class="fired">✓ 已提醒</span>' : '') +
+        '<button class="test">测试提醒</button>' +
+      '</div>';
+  return (
+    '<div class="card ' + m.level + (isHist ? "" : (st === "past" ? " past" : "")) + '" ' +
+      'data-id="' + m.id + '" data-region="' + regionCls + '" data-cat="' + m.cat + '" data-alerted="' + alerted + '"' +
+      (isHist ? ' data-hist="true"' : '') + '>' +
+      '<div class="card-head">' +
+        '<span class="badge">' + REGION_BADGE[m.region] + '</span>' +
+        '<span class="badge">' + CAT_BADGE[m.cat] + '</span>' +
+        '<span class="badge lv ' + m.level + '">' + m.level + '</span>' +
+        (isHist && m.hot ? '<span class="badge hot">⚡ 反转级</span>' : '') +
+        (isHist ? '<span class="badge">📜 回顾</span>' : '') +
+        '<span class="date">' + fmtDateOnly(Date.parse(m.start)) + '</span>' +
+      '</div>' +
+      '<h2>' + m.title + '</h2>' +
+      '<p class="org">' + m.org + '</p>' +
+      cdbox +
+      '<p class="impact"><b>对股市影响：</b>' + m.impact + '</p>' +
+      '<p class="note">' + m.note + '</p>' +
+      remindHtml +
+    '</div>'
+  );
+}
+
+function renderCards(){
+  let list;
+  if (view === "history") {
+    const w = histWindow();
+    const nowT = Date.now();
+    // 内置历史事件 + 已发生的未来事件（事件过点自动进入历史；同日同标题去重）
+    const extra = MEETINGS.filter(m => Date.parse(m.start) <= nowT &&
+      !HISTORY.some(h => h.id === m.id || (h.start.slice(0, 10) === m.start.slice(0, 10) && h.title === m.title)));
+    const all = HISTORY.concat(extra);
+    list = all.filter(m => {
+      const t = Date.parse(m.start);
+      return t >= w.start && t <= w.end;
+    }).sort((a,b) => Date.parse(b.start) - Date.parse(a.start)); // 历史：最近在前
+    cardsEl.innerHTML = list.map(m => cardHtml(m, true)).join("");
+    document.getElementById("histRange").textContent = "共 " + list.length + " 条";
+    document.getElementById("statNext").textContent = list.length ? "回顾窗口共 " + list.length + " 条事件" : "该窗口暂无事件";
+  } else {
+    list = MEETINGS.slice().sort((a,b) => Date.parse(a.start) - Date.parse(b.start));
+    cardsEl.innerHTML = list.map(m => cardHtml(m, false)).join("");
+  }
+  applyFilter();
+  bindCardEvents();
+}
+
+function applyFilter(){
+  document.querySelectorAll(".filters button[data-f]").forEach(b => b.classList.toggle("on", b.dataset.f === filter));
+  cardsEl.querySelectorAll(".card").forEach(card => {
+    let show = true;
+    if(filter === "cn") show = card.dataset.region === "cn";
+    else if(filter === "overseas") show = card.dataset.region === "overseas";
+    else if(filter === "policy") show = card.dataset.cat === "policy";
+    else if(filter === "tech") show = card.dataset.cat === "tech";
+    else if(filter === "alerted") show = card.dataset.alerted === "true";
+    card.style.display = show ? "" : "none";
+  });
+}
+
+/* ============ 5. 卡片交互 ============ */
+function bindCardEvents(){
+  cardsEl.querySelectorAll(".card").forEach(card => {
+    if(card.dataset.hist === "true") {
+      // 历史卡：点击进入二级页面（内容要点 + K 线回顾）
+      card.addEventListener("click", () => { location.hash = "#detail/" + encodeURIComponent(card.dataset.id); });
+      return;
+    }
+    // 未来卡：也可点击查看会议内容与影响（排除提醒控件区域）
+    card.addEventListener("click", (e) => {
+      const t = e && e.target;
+      if (t && t.tagName === "INPUT") return;
+      if (t && t.closest && (t.closest(".remind") || t.closest(".test"))) return;
+      location.hash = "#detail/" + encodeURIComponent(card.dataset.id);
+    });
+    const id = card.dataset.id;
+    const m = MEETINGS.find(x => x.id === id);
+    const s = getSetting(id);
+
+    card.querySelector(".remind-on").addEventListener("change", e => {
+      s.enabled = e.target.checked;
+      if(!s.enabled) s.fired = null;
+      card.dataset.alerted = String(s.enabled);
+      saveStore(); refreshStats();
+    });
+    card.querySelector(".r-days").addEventListener("change", e => {
+      s.leadDays = Math.max(0, parseInt(e.target.value) || 0);
+      s.fired = null; saveStore(); refreshStats();
+    });
+    card.querySelector(".r-hours").addEventListener("change", e => {
+      s.leadHours = Math.max(0, Math.min(23, parseInt(e.target.value) || 0));
+      s.fired = null; saveStore(); refreshStats();
+    });
+    card.querySelector(".test").addEventListener("click", () => {
+      const lead = leadMs(s);
+      const left = Date.parse(m.start) - now();
+      const cd = left > 0 ? "距开始还有 " + fmtLeft(Math.max(0, left)) : "已开始 / 已结束";
+      fireReminder(m, "（测试）" + cd + "，实际提醒点：提前 " + s.leadDays + " 天 " + s.leadHours + " 小时", true);
+    });
+  });
+}
+
+function fmtLeft(ms){
+  const p = cdParts(ms);
+  let out = "";
+  if(p.d > 0) out += p.d + " 天 ";
+  if(p.h > 0) out += p.h + " 小时 ";
+  if(p.mi > 0) out += p.mi + " 分 ";
+  out += p.se + " 秒";
+  return out;
+}
+
+/* ============ 6. 倒计时刷新 ============ */
+function tick(){
+  const t = new Date();
+  const week = "日一二三四五六"[t.getDay()];
+  document.getElementById("today").textContent =
+    t.getFullYear() + "年" + (t.getMonth()+1) + "月" + t.getDate() + "日 星期" + week;
+  document.getElementById("liveClock").textContent =
+    String(t.getHours()).padStart(2,"0") + ":" + String(t.getMinutes()).padStart(2,"0") + ":" + String(t.getSeconds()).padStart(2,"0");
+
+  document.querySelectorAll(".card .cdbox").forEach(box => {
+    const card = box.closest(".card");
+    if(card.dataset.hist === "true") return; // 历史卡不刷新倒计时
+    const m = MEETINGS.find(x => x.id === card.dataset.id);
+    if(!m) return;
+    const html = cdHtml(m, true);
+    if(box.innerHTML !== html) box.innerHTML = html;
+  });
+
+  // 统计：距最近大事件（仅未来视图）
+  if (view === "future") {
+    const n = now();
+    const next = MEETINGS.map(m => ({ m, t: Date.parse(m.start) }))
+      .filter(x => x.t > n && x.t - n > 0)
+      .sort((a,b) => a.t - b.t)[0];
+    if(next) document.getElementById("statNext").textContent = "还有 " + fmtLeft(next.t - n);
+    else document.getElementById("statNext").textContent = "—";
+  }
+}
+
+function refreshStats(){
+  let alerts = 0, fired = 0;
+  MEETINGS.forEach(m => {
+    const s = getSetting(m.id);
+    if(s.enabled) alerts++;
+    if(s.fired === firedKeyOf(s) && s.fired !== null) fired++;
+  });
+  document.getElementById("statAlerts").textContent = alerts;
+  document.getElementById("statFired").textContent = fired;
+}
+
+/* ============ 7. 提醒触发 ============ */
+let audioCtx = null;
+function beep(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = "sine"; o.frequency.value = 880;
+    g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.55);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.6);
+    setTimeout(() => {
+      const o2 = audioCtx.createOscillator(), g2 = audioCtx.createGain();
+      o2.type = "sine"; o2.frequency.value = 1175;
+      g2.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      g2.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + 0.02);
+      g2.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.55);
+      o2.connect(g2); g2.connect(audioCtx.destination);
+      o2.start(); o2.stop(audioCtx.currentTime + 0.6);
+    }, 380);
+  }catch(e){}
+}
+
+function fireReminder(m, sub, isTest){
+  const left = Date.parse(m.start) - now();
+  document.getElementById("mEv").textContent = m.title;
+  document.getElementById("mCd").textContent = left > 0
+    ? "距开始还有 " + fmtLeft(left)
+    : (now() <= Date.parse(m.end) ? "会议进行中" : "会议已结束");
+  document.getElementById("mSub").textContent = sub + " · " + (m.org || "");
+  document.getElementById("modal").classList.add("show");
+  beep();
+  try{
+    if("Notification" in window && Notification.permission === "granted"){
+      const n = new Notification("⏰ 重大事件提醒：" + m.title, {
+        body: sub,
+        tag: "eventradar-" + m.id
+      });
+      n.onclick = () => { window.focus(); };
+    }
+  }catch(e){}
+  // 标题闪烁
+  let on = false;
+  const t = setInterval(() => { on = !on; document.title = (on ? "🔔 " : "") + "重大事件提醒 · 股市日历"; }, 800);
+  setTimeout(() => { clearInterval(t); document.title = "重大事件提醒 · 股市日历"; }, 16000);
+  // 声音恢复
+  if(audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+
+function checkReminders(){
+  const n = now();
+  MEETINGS.forEach(m => {
+    const s = getSetting(m.id);
+    if(!s.enabled) return;
+    const start = Date.parse(m.start);
+    const due = start - leadMs(s);
+    const key = firedKeyOf(s);
+    if(n >= due && n < start && s.fired !== key){
+      s.fired = key;
+      saveStore();
+      refreshStats();
+      fireReminder(m, "提醒时间到：该事件将在 " + s.leadDays + " 天 " + s.leadHours + " 小时提醒（实际已到期）", false);
+    }
+  });
+}
+
+/* ============ 8. 顶栏事件 ============ */
+document.querySelectorAll(".filters button[data-f]").forEach(b => {
+  b.addEventListener("click", () => { filter = b.dataset.f; applyFilter(); });
+});
+
+// 视图切换：未来 / 历史
+document.querySelectorAll(".view-btn").forEach(b => {
+  b.addEventListener("click", () => {
+    view = b.dataset.view;
+    if(view === "history" && filter === "alerted") filter = "all";
+    renderCards();
+    updateViewUI();
+  });
+});
+
+// 历史窗口控件
+const histEndEl = document.getElementById("histEnd");
+histEndEl.min = MIN_HIST;
+histEndEl.max = TODAY;
+histEndEl.value = TODAY;
+histEnd = TODAY;
+histEndEl.addEventListener("change", () => {
+  let v = histEndEl.value;
+  if(!v) return;
+  if(v > TODAY) v = TODAY;
+  if(v < MIN_HIST) v = MIN_HIST;
+  histEnd = v;
+  histEndEl.value = v;
+  if(view === "history") renderCards();
+});
+document.querySelectorAll(".histbar .hy").forEach(b => {
+  b.addEventListener("click", () => {
+    const y = b.dataset.y;
+    let v;
+    if(y === "recent") v = TODAY;
+    else { v = y + "-12-31"; if(v > TODAY) v = TODAY; }
+    histEnd = v;
+    histEndEl.value = v;
+    if(view === "history") renderCards();
+    document.querySelectorAll(".histbar .hy").forEach(x => x.classList.toggle("on", x === b));
+  });
+});
+
+function updateViewUI(){
+  document.querySelectorAll(".view-btn").forEach(b => b.classList.toggle("on", b.dataset.view === view));
+  const bar = document.getElementById("histBar");
+  bar.style.display = view === "history" ? "flex" : "none";
+  const alertedBtn = document.querySelector('.filters button[data-f="alerted"]');
+  if(alertedBtn) alertedBtn.style.display = view === "history" ? "none" : "";
+  document.querySelectorAll(".filters button[data-f]").forEach(b => b.classList.toggle("on", b.dataset.f === filter));
+}
+document.getElementById("btnReset").addEventListener("click", () => {
+  if(!confirm("确定清空所有提醒设置（恢复默认：提前 3 天提醒）吗？")) return;
+  store = { defaultLeadDays:3, settings:{} };
+  saveStore(); renderCards(); refreshStats();
+});
+document.getElementById("btnOnlineUpdate").addEventListener("click", async () => {
+  const url = window.prompt("服务器行情数据地址（电脑上「启动网页服务器」后的地址）：", onlineUrl());
+  if (url && url.trim()) {
+    try { localStorage.setItem("eventRadar.onlineUrl", url.trim()); } catch(e) {}
+  }
+  await tryOnlineUpdate(false);
+});
+document.getElementById("btnBack").addEventListener("click", () => { location.hash = ""; });
+document.getElementById("mClose").addEventListener("click", () => {
+  document.getElementById("modal").classList.remove("show");
+});
+document.getElementById("modal").addEventListener("click", e => {
+  if(e.target.id === "modal") document.getElementById("modal").classList.remove("show");
+});
+
+// 系统通知授权
+document.getElementById("btnNotify").addEventListener("click", async () => {
+  const btn = document.getElementById("btnNotify");
+  if(!("Notification" in window)){ btn.textContent = "浏览器不支持"; return; }
+  if(Notification.permission === "granted"){ btn.textContent = "已开启 ✓"; return; }
+  if(Notification.permission === "denied"){ btn.textContent = "已被拒绝"; return; }
+  const p = await Notification.requestPermission();
+  btn.textContent = p === "granted" ? "已开启 ✓" : (p === "denied" ? "已被拒绝" : "未开启");
+});
+if("Notification" in window && Notification.permission === "granted"){
+  document.getElementById("btnNotify").textContent = "已开启 ✓";
+}
+
+/* ============ 8.5 历史详情页：事件当天前后 30 天 K 线 ============ */
+let kdata = null;
+let kdataPromise = null;
+
+// 在线更新（手机 App 无需重装 APK 即可更新行情）
+const ONLINE_KEY = "eventRadar.indices.latest.v1";
+const DEFAULT_ONLINE_URL = "http://192.168.1.36:8080/event-alerts/data/indices.js";
+function onlineUrl(){
+  try { return localStorage.getItem("eventRadar.onlineUrl") || DEFAULT_ONLINE_URL; }
+  catch(e) { return DEFAULT_ONLINE_URL; }
+}
+function readCachedLatest(){
+  try {
+    const s = localStorage.getItem(ONLINE_KEY);
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+}
+function saveCachedLatest(d){
+  try { localStorage.setItem(ONLINE_KEY, JSON.stringify(d)); } catch(e) {}
+}
+
+function ensureData(){
+  if (kdata) return Promise.resolve(kdata);
+  // 0) 之前在线更新过的最新数据（比内置新则优先）
+  const lt = readCachedLatest();
+  const built = window.INDICES_DATA;
+  if (lt && lt.indices && lt.indices.length >= 8 && built) {
+    const cachedT = Date.parse(lt.generatedAt || 0);
+    const builtT = Date.parse(built.generatedAt || 0);
+    if (cachedT > builtT) { kdata = lt; return Promise.resolve(kdata); }
+  }
+  // 1) 内置数据（APK / 网页 assets）
+  if (built) { kdata = built; return Promise.resolve(kdata); }
+  // 2) fetch 兜底
+  if (!kdataPromise) {
+    kdataPromise = fetch("data/indices.json").then(r => r.ok ? r.json() : null).catch(() => null);
+  }
+  return kdataPromise.then(d => { kdata = d; return d; });
+}
+
+let onlineBusy = false;
+function onlineLoadScript(){
+  return new Promise((resolve) => {
+    const s = document.createElement("script");
+    s.src = onlineUrl() + "?t=" + Date.now();
+    s.onload = () => resolve(true);
+    s.onerror = () => resolve(false);
+    document.head.appendChild(s);
+  });
+}
+async function tryOnlineUpdate(silent){
+  if (onlineBusy) return false;
+  onlineBusy = true;
+  const ok = await onlineLoadScript();
+  onlineBusy = false;
+  const d = (ok && window.INDICES_DATA && window.INDICES_DATA.indices && window.INDICES_DATA.indices.length >= 8) ? window.INDICES_DATA : null;
+  if (d) {
+    kdata = d;
+    saveCachedLatest(d);
+    const m = (location.hash || "").match(/^#detail\/([^/]+)$/);
+    if (m) {
+      const ev = HISTORY.find(x => x.id === decodeURIComponent(m[1])) || MEETINGS.find(x => x.id === decodeURIComponent(m[1]));
+      if (ev) { document.getElementById("chartGrid").innerHTML = ""; renderChartGrid(ev, false); }
+    }
+    if (!silent) alert("✅ 行情数据已更新至 " + fmtSnapshotTime(d.generatedAt));
+    return true;
+  }
+  if (!silent) alert("⚠ 更新失败：请确认电脑上「启动网页服务器」已开启，且手机与电脑在同一 Wi-Fi。\n可在「🔄 更新行情」按钮里修改服务器地址。");
+  return false;
+}
+
+// APK（file://）下自动拉取最新行情：打开 App 或进入详情页时尝试，10 分钟内只拉一次
+function maybeAutoRefresh(){
+  if (location.protocol !== "file:" && location.protocol !== "content:") return;
+  try {
+    const last = +localStorage.getItem("eventRadar.lastAutoRefresh") || 0;
+    if (Date.now() - last < 10 * 60 * 1000) return;
+    localStorage.setItem("eventRadar.lastAutoRefresh", String(Date.now()));
+  } catch(e) {}
+  tryOnlineUpdate(true);
+}
+
+function openDetail(id){
+  let ev = HISTORY.find(x => x.id === id);
+  let isFuture = false;
+  if (!ev) {
+    ev = MEETINGS.find(x => x.id === id);
+    if (ev) isFuture = Date.parse(ev.start) > Date.now(); // 已发生的会议按历史展示（可看 K 线）
+  }
+  if (!ev){ location.hash = ""; return; }
+  maybeAutoRefresh();
+  document.querySelector(".filters").style.display = "none";
+  document.getElementById("histBar").style.display = "none";
+  document.getElementById("cards").style.display = "none";
+  document.getElementById("detailView").style.display = "";
+  const head = document.getElementById("detailHead");
+  const points = contentFor(ev) || [];
+  const bb = bullbearFor(ev);
+  const dt = dataTableFor(ev);
+  const dataHtml = dt
+    ? '<div class="data-table-block">' +
+        '<h3>📊 往期数据对比 · ' + dt.title + '</h3>' +
+        '<table class="data-table"><thead><tr>' + dt.head.map(h => '<th>' + h + '</th>').join("") + '</tr></thead><tbody>' +
+        dt.rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join("") + '</tr>').join("") +
+        '</tbody></table>' +
+        '<p class="data-note">' + dt.note + '</p>' +
+      '</div>'
+    : "";
+  const bbHtml = bb
+    ? '<div class="bullbear">' +
+        '<div class="bb bull"><h4>📈 利好方向</h4><ul>' +
+          (bb.bull || []).map(x => '<li>' + x + '</li>').join("") +
+        '</ul></div>' +
+        '<div class="bb bear"><h4>📉 利空方向</h4><ul>' +
+          (bb.bear || []).map(x => '<li>' + x + '</li>').join("") +
+        '</ul></div>' +
+      '</div>'
+    : "";
+  const pointsHtml = points.length
+    ? '<div class="points-block">' +
+        '<h3>📌 会议内容要点与影响</h3>' +
+        points.map((pt, i) =>
+          '<div class="point">' +
+            '<div class="p-num">' + (i+1) + '</div>' +
+            '<div class="p-body">' +
+              '<div class="p-text">' + pt.p + '</div>' +
+              '<div class="p-impact"><b>→ 影响：</b>' + pt.i + '</div>' +
+            '</div>' +
+          '</div>'
+        ).join("") +
+      '</div>'
+    : "";
+  head.innerHTML =
+    '<div class="badges">' +
+      '<span class="badge">' + REGION_BADGE[ev.region] + '</span>' +
+      '<span class="badge">' + CAT_BADGE[ev.cat] + '</span>' +
+      '<span class="badge lv ' + ev.level + '">' + ev.level + '</span>' +
+      (ev.hot ? '<span class="badge hot">⚡ 反转级</span>' : '') +
+      (isFuture ? '<span class="badge">📅 未来会议</span>' : '') +
+      '<span class="badge">' + (isFuture ? '📅 ' : '📜 ') + fmtDateOnly(Date.parse(ev.start)) + '</span>' +
+    '</div>' +
+    '<h2>' + ev.title + '</h2>' +
+    '<p class="org">' + ev.org + '</p>' +
+    '<p class="impact"><b>对股市影响：</b>' + ev.impact + '</p>' +
+    '<p class="note">' + ev.note + '</p>' +
+    pointsHtml + bbHtml + dataHtml;
+  document.getElementById("chartGrid").innerHTML = "";
+  document.getElementById("chartHint").textContent = "";
+  window.scrollTo(0, 0);
+  renderChartGrid(ev, isFuture);
+}
+
+function closeDetail(){
+  document.getElementById("detailView").style.display = "none";
+  document.getElementById("cards").style.display = "";
+  document.querySelector(".filters").style.display = "";
+  updateViewUI();
+}
+
+function idxAtDate(bars, dateStr){
+  let idx = -1;
+  for (let i = bars.length - 1; i >= 0; i--) {
+    if (bars[i][0] <= dateStr) { idx = i; break; }
+  }
+  return idx;
+}
+
+function fmtSnapshotTime(iso){
+  if (!iso) return "未知";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "未知";
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+function calcMA(bars, n){
+  const out = new Array(bars.length).fill(null);
+  let sum = 0;
+  for (let i = 0; i < bars.length; i++) {
+    sum += bars[i][2];
+    if (i >= n) sum -= bars[i - n][2];
+    if (i >= n - 1) out[i] = sum / n;
+  }
+  return out;
+}
+
+function drawChart(canvas, bars, mas, evDate, winSize){
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || 340;
+  const h = canvas.clientHeight || 280;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const idx = idxAtDate(bars, evDate);
+  if (idx < 0) return null;
+  // 可调窗口：默认 121 根（前后各 60），范围 30 ~ 360 根，事件日居中
+  const want = Math.max(30, Math.min(360, Math.floor(winSize) || 121));
+  const n0 = bars.length;
+  const ww = Math.min(want, n0);
+  let start = idx - Math.floor((ww - 1) / 2);
+  start = Math.max(0, Math.min(start, n0 - ww));
+  const end = start + ww;
+  const win = bars.slice(start, end);
+  if (win.length < 2) return null;
+
+  let lo = Infinity, hi = -Infinity, vmax = 1;
+  for (const b of win) {
+    if (b[4] < lo) lo = b[4];
+    if (b[3] > hi) hi = b[3];
+    if (b[5] > vmax) vmax = b[5];
+  }
+  const pad = (hi - lo) * 0.08 || 1;
+  lo -= pad; hi += pad;
+
+  const L = 8, R = w - 8, T = 16;
+  const qH = Math.max(46, h * 0.24);   // 成交量区高度
+  const K = h - qH - 10;               // K 线区底部
+  const qTop = K + 10, qBot = h - 8;   // 成交量区
+  const n = win.length;
+  const slot = (R - L) / n;
+  const xOf = i => L + i * slot + slot / 2;
+  const yOf = v => K - (v - lo) / (hi - lo) * (K - T);
+  const yVol = v => qBot - (v / vmax) * (qBot - qTop);
+
+  // 网格（K 线区）
+  ctx.strokeStyle = "rgba(139,150,173,.14)";
+  ctx.lineWidth = 1;
+  for (let g = 0; g <= 4; g++) {
+    const gy = T + (K - T) * g / 4;
+    ctx.beginPath(); ctx.moveTo(L, gy); ctx.lineTo(R, gy); ctx.stroke();
+  }
+  // 量区上沿
+  ctx.beginPath(); ctx.moveTo(L, qTop); ctx.lineTo(R, qTop); ctx.stroke();
+
+  // 蜡烛 + 成交量
+  const bw = Math.max(1.5, slot * 0.7);
+  for (let i = 0; i < n; i++) {
+    const b = win[i];
+    const up = b[2] >= b[1];
+    ctx.strokeStyle = ctx.fillStyle = up ? "#ef476f" : "#2ec27e";
+    const cx = xOf(i);
+    ctx.beginPath(); ctx.moveTo(cx, yOf(b[3])); ctx.lineTo(cx, yOf(b[4])); ctx.stroke();
+    const top = yOf(Math.max(b[1], b[2])), bot = yOf(Math.min(b[1], b[2]));
+    ctx.fillRect(cx - bw / 2, top, bw, Math.max(1, bot - top));
+    // 成交量柱
+    const vy = yVol(b[5]);
+    ctx.fillRect(cx - bw / 2, vy, bw, Math.max(1, qBot - vy));
+  }
+
+  // 均线 MA5 / MA10 / MA20
+  const drawMA = (arr, color) => {
+    if (!arr) return;
+    ctx.strokeStyle = color; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    let started = false;
+    for (let i = 0; i < n; i++) {
+      const v = arr[start + i];
+      if (v == null) continue;
+      const px = xOf(i), py = yOf(v);
+      if (!started) { ctx.moveTo(px, py); started = true; }
+      else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  };
+  drawMA(mas && mas.ma5, "#ffd166");
+  drawMA(mas && mas.ma10, "#4cc9f0");
+  drawMA(mas && mas.ma20, "#b388ff");
+  drawMA(mas && mas.ma60, "#f7b731");
+  drawMA(mas && mas.ma240, "#ff6b9d");
+
+  // 事件日竖线（贯穿 K 线区与量区）
+  const evI = idx - start;
+  if (evI >= 0 && evI < n) {
+    const ex = xOf(evI);
+    ctx.strokeStyle = "#ffd166"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(ex, T); ctx.lineTo(ex, qBot); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#ffd166"; ctx.font = "11px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("事件日", ex, T - 3);
+  }
+
+  // 底部日期
+  ctx.fillStyle = "rgba(139,150,173,.7)"; ctx.font = "10px sans-serif"; ctx.textAlign = "left";
+  ctx.fillText(win[0][0], L, h - 1);
+  ctx.textAlign = "right";
+  ctx.fillText(win[n-1][0], R, h - 1);
+
+  return { start: win[0][0], end: win[n-1][0], firstClose: win[0][2], lastClose: win[n-1][2] };
+}
+
+async function renderChartGrid(ev, isFuture){
+  const grid = document.getElementById("chartGrid");
+  const hint = document.getElementById("chartHint");
+  if (isFuture) {
+    hint.textContent = "⏳ 该会议尚未召开，暂无 K 线数据；会议结束后更新数据（双击「更新行情数据.cmd」或等待每日自动更新）即可查看前后 60 天行情。";
+    grid.innerHTML = "";
+    return;
+  }
+  hint.textContent = "正在加载指数 K 线数据…";
+  grid.innerHTML = "";
+  const data = await ensureData();
+  if (!data || !data.indices) {
+    hint.textContent = "⚠ 指数数据加载失败：请确认 data/indices.js 与 index.html 在同一目录（或通过本地服务器打开），打包 APK 后数据会内置。";
+    return;
+  }
+  hint.textContent = "📊 行情数据快照：" + fmtSnapshotTime(data.generatedAt) + "（数据更新后刷新本页即可看到最新 K 线）";
+  const evDate = ev.start.slice(0, 10);
+  for (const it of data.indices) {
+    const card = document.createElement("div");
+    card.className = "chart-card";
+    card.innerHTML = '<h3>' + it.name + ' <small>' + it.market + '</small></h3>' +
+      '<canvas></canvas>' +
+      '<div class="chart-slider">' +
+        '<input type="range" min="30" max="360" step="1" value="121">' +
+        '<span class="win-label">121 根</span>' +
+      '</div>' +
+      '<div class="chart-legend">' +
+        '<span><i style="background:#ffd166"></i>MA5</span>' +
+        '<span><i style="background:#4cc9f0"></i>MA10</span>' +
+        '<span><i style="background:#b388ff"></i>MA20</span>' +
+        '<span><i style="background:#f7b731"></i>MA60</span>' +
+        '<span><i style="background:#ff6b9d"></i>MA240</span>' +
+        '<span><i style="background:#ef476f"></i>红涨</span>' +
+        '<span><i style="background:#2ec27e"></i>绿跌</span>' +
+        '<span>底部柱：成交量</span>' +
+      '</div>' +
+      '<div class="chart-meta"><span class="range">—</span><span class="chg">—</span></div>';
+    grid.appendChild(card);
+    await new Promise(r => setTimeout(r, 0));
+    const mas = { ma5: calcMA(it.bars, 5), ma10: calcMA(it.bars, 10), ma20: calcMA(it.bars, 20), ma60: calcMA(it.bars, 60), ma240: calcMA(it.bars, 240) };
+    const canvas = card.querySelector("canvas");
+    const slider = card.querySelector(".chart-slider input");
+    const label = card.querySelector(".win-label");
+    const redraw = (w) => {
+      const info = drawChart(canvas, it.bars, mas, evDate, w);
+      if (info) {
+        card.querySelector(".range").textContent = info.start + " ~ " + info.end;
+        const chg = (info.lastClose / info.firstClose - 1) * 100;
+        const chgEl = card.querySelector(".chg");
+        chgEl.textContent = (chg >= 0 ? "+" : "") + chg.toFixed(2) + "%";
+        chgEl.style.color = chg >= 0 ? "#ef476f" : "#2ec27e";
+      }
+    };
+    slider.addEventListener("input", () => {
+      const w = parseInt(slider.value) || 121;
+      label.textContent = w + " 根";
+      redraw(w);
+    });
+    redraw(121);
+  }
+}
+
+function route(){
+  const m = (location.hash || "").match(/^#detail\/([^/]+)$/);
+  if (m) openDetail(decodeURIComponent(m[1]));
+  else closeDetail();
+}
+
+/* ============ 9. 启动 ============ */
+renderCards();
+updateViewUI();
+refreshStats();
+tick();
+route();
+window.addEventListener("hashchange", route);
+// APK（file:// / content:）打开时自动从电脑服务拉取最新行情（无需重装 APK）
+if (location.protocol === "file:" || location.protocol === "content:") {
+  setTimeout(maybeAutoRefresh, 1500);
+}
+setInterval(tick, 1000);
+setInterval(checkReminders, 15000);
+</script>
+</body>
+</html>
