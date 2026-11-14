@@ -1550,7 +1550,7 @@ document.getElementById("btnReset").addEventListener("click", () => {
   saveStore(); renderCards(); refreshStats();
 });
 document.getElementById("btnOnlineUpdate").addEventListener("click", async () => {
-  const url = window.prompt("服务器行情数据地址（电脑上「启动网页服务器」后的地址）：", onlineUrl());
+  const url = window.prompt("行情数据地址（默认从 GitHub 自动更新，一般无需修改，直接确定即可）：", onlineUrl());
   if (url && url.trim()) {
     try { localStorage.setItem("eventRadar.onlineUrl", url.trim()); } catch(e) {}
   }
@@ -1644,7 +1644,7 @@ async function tryOnlineUpdate(silent){
     if (!silent) alert("✅ 行情数据已更新至 " + fmtSnapshotTime(d.generatedAt));
     return true;
   }
-  if (!silent) alert("⚠ 更新失败：请确认电脑上「启动网页服务器」已开启，且手机与电脑在同一 Wi-Fi。\n可在「🔄 更新行情」按钮里修改服务器地址。");
+  if (!silent) alert("⚠ 更新失败：请检查网络连接后重试（有网即可，数据从 GitHub 自动获取，无需电脑）。");
   return false;
 }
 
