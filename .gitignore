@@ -1,0 +1,11 @@
+# 本地构建产物 / 敏感文件（不发布到 GitHub）
+build/
+dist/
+*.apk
+*.exe
+keystore.jks
+tools/*.log
+tools/server.log
+data/indices.json
+__pycache__/
+*.pyc
