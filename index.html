@@ -1300,10 +1300,16 @@ function renderCards(){
   let list;
   if (view === "history") {
     const w = histWindow();
-    const nowT = Date.now();
-    // 内置历史事件 + 已发生的未来事件（事件过点自动进入历史；同日同标题去重）
-    const extra = MEETINGS.filter(m => Date.parse(m.start) <= nowT &&
-      !HISTORY.some(h => h.id === m.id || (h.start.slice(0, 10) === m.start.slice(0, 10) && h.title === m.title)));
+    // 内置历史事件 + 已结束的未来事件（结束后自动归入历史；标题前 3 字相同且日期相近视为同一事件去重）
+    const extra = MEETINGS.filter(m => {
+      if (statusOf(m) !== "past") return false;
+      return !HISTORY.some(h => {
+        if (h.id === m.id) return true;
+        if (h.title.slice(0, 3) === m.title.slice(0, 3) &&
+            Math.abs(Date.parse(h.start) - Date.parse(m.start)) < 45 * 86400000) return true;
+        return false;
+      });
+    });
     const all = HISTORY.concat(extra);
     list = all.filter(m => {
       const t = Date.parse(m.start);
@@ -1313,7 +1319,9 @@ function renderCards(){
     document.getElementById("histRange").textContent = "共 " + list.length + " 条";
     document.getElementById("statNext").textContent = list.length ? "回顾窗口共 " + list.length + " 条事件" : "该窗口暂无事件";
   } else {
-    list = MEETINGS.slice().sort((a,b) => Date.parse(a.start) - Date.parse(b.start));
+    // 未来视图只保留未开始 / 进行中的事件；已结束的归入历史
+    list = MEETINGS.filter(m => statusOf(m) !== "past")
+      .sort((a,b) => Date.parse(a.start) - Date.parse(b.start));
     cardsEl.innerHTML = list.map(m => cardHtml(m, false)).join("");
   }
   applyFilter();
