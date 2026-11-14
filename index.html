@@ -1581,9 +1581,9 @@ if("Notification" in window && Notification.permission === "granted"){
 let kdata = null;
 let kdataPromise = null;
 
-// 在线更新（手机 App 无需重装 APK 即可更新行情）
+// 在线更新（手机 App 无需重装 APK 即可更新行情；默认走 GitHub Pages 公网地址，任何网络可用）
 const ONLINE_KEY = "eventRadar.indices.latest.v1";
-const DEFAULT_ONLINE_URL = "http://192.168.1.36:8080/event-alerts/data/indices.js";
+const DEFAULT_ONLINE_URL = "https://JAVAChrisGong.github.io/event-alerts/data/indices.js";
 function onlineUrl(){
   try { return localStorage.getItem("eventRadar.onlineUrl") || DEFAULT_ONLINE_URL; }
   catch(e) { return DEFAULT_ONLINE_URL; }
