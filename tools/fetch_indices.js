@@ -22,11 +22,11 @@ const INDICES = [
   { key: "csi2000", name: "中证 2000", market: "A 股",
     sources: [{ kind: "csindex", code: "932000" }, { kind: "em", secid: "2.932000" }] },
   { key: "ixic", name: "纳斯达克综合", market: "美股",
-    sources: [{ kind: "us", sina: ".IXIC" }, { kind: "em", secid: "100.NDX" }] },
+    sources: [{ kind: "us", sina: ".IXIC" }, { kind: "em", secid: "100.NDX" }, { kind: "yahoo", symbol: "^IXIC" }] },
   { key: "dji", name: "道琼斯工业", market: "美股",
-    sources: [{ kind: "us", sina: ".DJI" }, { kind: "em", secid: "100.DJIA" }] },
+    sources: [{ kind: "us", sina: ".DJI" }, { kind: "em", secid: "100.DJIA" }, { kind: "yahoo", symbol: "^DJI" }] },
   { key: "spx", name: "标普 500", market: "美股",
-    sources: [{ kind: "us", sina: ".INX" }, { kind: "em", secid: "100.SPX" }] },
+    sources: [{ kind: "us", sina: ".INX" }, { kind: "em", secid: "100.SPX" }, { kind: "yahoo", symbol: "^GSPC" }] },
 ];
 
 function fetchUrl(url, retries = 3) {
@@ -88,11 +88,33 @@ async function fetchEM(secid) {
   });
 }
 
+// Yahoo Finance（GitHub Actions 美国服务器可达；国内网络通常被拦）：返回 [date, open, close, high, low, vol]
+async function fetchYahoo(symbol) {
+  const p1 = Math.floor(Date.parse(BEG) / 1000);
+  const p2 = Math.floor(Date.now() / 1000);
+  const url = "https://query1.finance.yahoo.com/v8/finance/chart/" + symbol +
+    "?period1=" + p1 + "&period2=" + p2 + "&interval=1d&events=history";
+  const j = JSON.parse(await fetchUrl(url));
+  const r = j.chart && j.chart.result && j.chart.result[0];
+  if (!r || !r.timestamp) throw new Error(symbol + " no data");
+  const q = r.indicators.quote[0];
+  const bars = [];
+  for (let i = 0; i < r.timestamp.length; i++) {
+    if (q.close[i] == null) continue;
+    const d = new Date(r.timestamp[i] * 1000);
+    const date = d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0");
+    bars.push([date, +q.open[i].toFixed(2), +q.close[i].toFixed(2), +q.high[i].toFixed(2), +q.low[i].toFixed(2), Math.round(q.volume[i] || 0)]);
+  }
+  if (!bars.length) throw new Error(symbol + " empty");
+  return bars;
+}
+
 async function fetchSource(src) {
   if (src.kind === "cn") return fetchCN(src.code);
   if (src.kind === "us") return fetchUS(src.sina);
   if (src.kind === "csindex") return fetchCsindex(src.code);
   if (src.kind === "em") return fetchEM(src.secid);
+  if (src.kind === "yahoo") return fetchYahoo(src.symbol);
   throw new Error("unknown source");
 }
 
